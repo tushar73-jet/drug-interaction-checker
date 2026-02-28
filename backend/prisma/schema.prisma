@@ -18,6 +18,7 @@ model DrugInteraction {
   drug1       String
   drug2       String
   description String
+  severity    String // E.g., Major, Moderate, Minor
 
   @@index([drug1])
   @@index([drug2])

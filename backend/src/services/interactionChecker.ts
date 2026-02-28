@@ -4,6 +4,7 @@ export interface InteractionResult {
     drug1: string;
     drug2: string;
     description: string;
+    severity: string;
 }
 
 export const checkInteractions = async (drugs: string[]): Promise<InteractionResult[]> => {
@@ -46,6 +47,7 @@ export const checkInteractions = async (drugs: string[]): Promise<InteractionRes
     return interactions.map(interaction => ({
         drug1: interaction.drug1,
         drug2: interaction.drug2,
-        description: interaction.description
+        description: interaction.description,
+        severity: interaction.severity
     }));
 };

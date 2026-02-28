@@ -15,10 +15,21 @@ async function main() {
     fs.createReadStream("data/db_drug_interactions.csv")
       .pipe(csv())
       .on("data", (data: CsvRow) => {
+        const description = data['Interaction Description'] || "";
+        let severity = "Moderate";
+
+        const lowerDesc = description.toLowerCase();
+        if (lowerDesc.includes("fatal") || lowerDesc.includes("severe") || lowerDesc.includes("major") || lowerDesc.includes("life-threatening")) {
+          severity = "Major";
+        } else if (lowerDesc.includes("minor") || lowerDesc.includes("mild") || lowerDesc.includes("weak")) {
+          severity = "Minor";
+        }
+
         results.push({
           drug1: data['Drug 1'],
           drug2: data['Drug 2'],
-          description: data['Interaction Description']
+          description: description,
+          severity: severity
         })
       })
       .on("end", resolve)
