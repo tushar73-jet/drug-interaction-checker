@@ -10,5 +10,15 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+}
+
+model DrugInteraction {
+  id          Int    @id @default(autoincrement())
+  drug1       String
+  drug2       String
+  description String
+
+  @@index([drug1])
+  @@index([drug2])
 }
