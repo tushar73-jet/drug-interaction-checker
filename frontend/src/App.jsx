@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import GraphView from './GraphView'
 
 function App() {
   const [query, setQuery] = useState('')
@@ -114,7 +115,12 @@ function App() {
 
       {interactions !== null && (
         <div className="results-section">
-          <h2>Interaction Results</h2>
+          <h2>Interaction Graph</h2>
+          <div className="graph-container" style={{ marginBottom: '2rem' }}>
+            <GraphView drugs={selectedDrugs} interactions={interactions} />
+          </div>
+
+          <h2>Interaction Details</h2>
           {interactions.length > 0 ? (
             interactions.map((interaction, index) => {
               const severity = interaction.severity || 'Moderate';
