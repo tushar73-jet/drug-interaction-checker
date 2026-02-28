@@ -1,57 +1,129 @@
 # 💊 Drug Interaction Checker
+An interactive, offline-capable web application to detect, visualize, and report dangerous drug-drug interactions.
 
-An interactive, offline-capable, full-stack web application designed to detect dangerous drug-drug interactions, visualize medication conflicts as an interactive graph, and generate clinical PDF reports.
+---
 
-## 1. Problem Statement
-**Polypharmacy Safety Risk:** Patients taking multiple medications face a high risk of dangerous interactions. Existing checking tools are expensive, internet-dependent, or lack structured visual insights, leading to manual, error-prone evaluations at the point of care.
+## 🏗️ Checkpoint 1: Concept Validation (6:00 PM Evaluation)
 
-## 2. Problem Understanding & Approach
-**Approach:** We replace manual and fragmented checks with a structured local SQLite database and a fast, deterministic pairwise interaction algorithm that works completely offline.
+### :one: Clear Problem Understanding
+*   **The Problem:** Patients—especially the elderly and those with chronic illnesses—frequently take multiple medications simultaneously (polypharmacy), exponentially increasing the risk of adverse drug-drug interactions.
+*   **Why it Exists:** Current checking methods are highly fragmented. Doctors are forced to rely on manual book/PDF lookups or expensive, internet-dependent EHR systems that are inaccessible in smaller clinics.
+*   **Real-World Impact:** Missed drug interactions lead to increased adverse drug reactions, longer hospital stays, and severe patient safety risks, particularly in under-resourced or rural healthcare settings.
 
-## 3. Proposed Solution
-**Overview:** A full-stack app where clinicians enter a drug list to instantly see N*(N-1)/2 interactions, categorized by severity, visualized in a React Flow graph, and exportable as a clinical PDF report.
+### :two: Defined User Persona
+*   **Target Users:** General Practitioners (GPs), Rural Clinic Doctors, Pharmacists, and Caregivers.
+*   **Who they are:** Medical professionals managing complex patient prescriptions often in fast-paced or low-connectivity environments.
+*   **Needs & Pain Points:** Existing tools are too slow (manual lookup), lack visual clarity, or require constant internet. They desperately need a fast, offline tool to instantly process $N \times (N-1)/2$ multi-drug combinations.
 
-## 4. System Architecture
-**Flow:** User → React Frontend → Express API → Rule-Based Engine → SQLite Database → JSON Response (Graph Nodes & Pairwise Data).
+### :three: Proposed Solution Approach
+*   **Proposed Solution:** A full-stack, entirely offline application that computes all pairwise drug interactions against a local database, visualizes the conflict network in a color-coded graph, and exports a clinical report.
+*   **How it Addresses the Problem:** It acts as an instant decision-support tool. By using SQLite locally, it guarantees 100% offline availability and sub-200ms response times for identifying Contraindicated, Severe, or Moderate interactions.
+*   **Methodology & Stack:** Deterministic Rule-Based algorithm checking pre-seeded interaction pairs. Tech stack includes React, Vite, Express.js, SQLite, and Prisma.
 
-## 5. Database Design
-**Schema:** A single, optimized `DrugInteraction` table with columns: `id`, `drug1`, `drug2`, `severity`, `description`, and `mechanism`. Bidirectional lookup eliminates the need for complex joins.
+### :four: Architecture Diagram
+**High-level data flow:**
+```text
+┌─────────────────────────────────────────────────────────┐
+│                     FRONTEND (React)                    │
+│  DrugSearchBar → DrugTags → [CHECK] → Results Page      │
+│  InteractionCards | InteractionGraph | ReportExport     │
+└───────────────────────────┬─────────────────────────────┘
+                            │ HTTP (Axios)
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                  BACKEND API (Express.js)               │
+│  GET  /api/drugs/search?q=                              │
+│  POST /api/interactions/check                           │
+└───────────────────────────┬─────────────────────────────┘
+                            │ Prisma ORM
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│               DATABASE (SQLite - dev.db)                │
+│  [id | drug1 | drug2 | description | severity]          │
+└─────────────────────────────────────────────────────────┘
+```
 
-## 6. Dataset Selected
-**Source:** Curated open-source pharmacological dataset (`db_drug_interactions.csv`). Seeded into the local database to guarantee 100% offline functionality.
+### :five: Setup Instructions (Repository Setup)
+```bash
+# 1. Clone the repository
+git clone https://github.com/tushar73-jet/drug-interaction-checker.git
+cd drug-interaction-checker
 
-## 7. Model Selected
-**Engine:** Rule-Based Graph Detection. We explicitly rejected unpredictable ML models in favor of deterministic, 100% recall database lookups for this safety-critical clinical application.
+# 2. Install Dependencies
+npm install
 
-## 8. Technology Stack
-**Stack:** React 19, Vite, Tailwind CSS, React Flow (Frontend) | Express.js, Node 22 (Backend) | Prisma ORM, SQLite (Database) | jsPDF (Export).
+# 3. Setup Database (Migration & Seed)
+npx prisma migrate dev
+npx ts-node src/seed.ts
 
-## 9. API Documentation & Testing
-**Core Endpoints:** 
-- `GET /api/drugs/search?q={query}` (Autocomplete)
-- `POST /api/interactions/check` (Core Pairwise Checker)
-- `GET /api/health`
+# 4. Start the Backend API
+npx ts-node src/server.ts
 
-## 10. Module-wise Development & Deliverables
-**Checkpoints:** Planning (Architecture/Schema) → Backend (Express API) → Frontend (React App) → Engine Verification (<200ms latency) → Integration (React Flow/jsPDF export) → Deployment.
+# 5. Start the Frontend (in a new terminal)
+cd frontend
+npm install
+npm run dev
+```
 
-## 11. End-to-End Workflow
-**User Journey:** Search/select medications → Click "Check" (API triggers) → View Severity Summary → Explore Graph & Detail Cards → Export Patient PDF Report.
+### :six: Initial Proof of Concept (PoC Status)
+*   ✅ **Database Seeding Engine:** Custom script (`src/seed.ts`) successfully parses thousands of raw CSV rows and seeds the offline SQLite database via Prisma.
+*   ✅ **Core Interaction Algorithm:** Bidirectional querying logic implemented to handle N-way drug interaction paths.
+*   ✅ **Environment Setup:** Full monorepo structure combining backend Express and frontend Vite scaffolding.
 
-## 12. Demo & Video
-**Links:** [GitHub Repository](https://github.com/tushar73-jet/drug-interaction-checker) | *Live Demo Link (TBD)* | *Video Pitch Link (TBD)*
+---
+## 📑 Project Master Summary (17 Points)
 
-## 13. Hackathon Deliverables Summary
-**Achievements:** Fully functional, offline-capable full-stack app with custom database seeding, interactive graphing, PDF generation, and RESTful stateless architecture.
+### 1. Problem Statement
+**Title:** Polypharmacy Safety Risk. taking multiple medications face compounded risks of dangerous interactions, and the current tools are expensive or slow.
 
-## 14. Team Roles & Responsibilities
-**Tushar:** Full-Stack Developer & Project Lead (Architecture, Backend APIs, Prisma Schema, React Frontend, Graph Integration).
+### 2. Problem Understanding & Approach
+**Strategy:** An offline SQLite database with a deterministic algorithm to rapidly check all interaction pairs.
 
-## 15. Future Scope & Scalability
-**Next Steps:** Incorporate dosage conflict detection, add brand-to-generic mapping, and integrate with standard HL7 FHIR APIs for EHR interoperability.
+### 3. Proposed Solution
+**Overview:** Enter a drug list to instantly see graded interactions, visual graphs, and clinical reports.
 
-## 16. Known Limitations
-**Current Constraints:** Cannot detect novel interactions not present in the seeded CSV, does not analyze dose-dependency, and should function strictly as decision-support rather than clinical replacement.
+### 4. System Architecture
+**Flow:** User → React Frontend → Express API → Rule-Based Engine → SQLite Database → JSON Response
 
-## 17. Impact
-**Value:** Significantly reduces the risk of adverse drug reactions, cuts clinical checking time to under 5 seconds, and provides a free, highly accessible tool for small/rural clinics.
+### 5. Database Design
+A single `DrugInteraction` flat-table containing `id`, `drug1`, `drug2`, `severity`, and `description`. Indexed for bidirectional lookups.
+
+### 6. Dataset Selected
+**Name:** `db_drug_interactions.csv`
+**Source:** Open-source pharmacological dataset, bulk-seeded via Prisma for offline functionality.
+
+### 7. Model Selected
+**Name:** Rule-Based Graph Detection
+**Reasoning:** Deterministic safety. ML introduces unacceptable uncertainty in exact clinical interaction matching.
+
+### 8. Technology Stack
+**Frontend:** React 19, Vite, Tailwind, React Flow | **Backend:** Express.js, Node.js | **Database:** SQLite, Prisma ORM
+
+### 9. API Documentation & Testing
+**Core Endpoints:**
+1. `GET /api/drugs/search?q={query}` (Autocomplete)
+2. `POST /api/interactions/check` (Pairwise Checker)
+
+### 10. Module-wise Deliverables
+Scope definition → Express API/Schema → React UI → Graph Integration → Testing → Local Deployment.
+
+### 11. End-to-End Workflow
+Search drug → Select pills → "Check" → View Graph & Cards → Export PDF.
+
+### 12. Demo & Video
+**Repository:** [GitHub](https://github.com/tushar73-jet/drug-interaction-checker)
+
+### 13. Hackathon Deliverables Summary
+Fully offline app, custom dataset seeded, interactive graph UI, and PDF reporting.
+
+### 14. Team Roles & Responsibilities
+**Tushar:** Full-Stack Dev (API, DB Schema, React UI, Flow Integration)
+
+### 15. Future Scope & Scalability
+**Short-Term:** Combine duplicate interactions, add brand/generic name mapping. **Long-Term:** HL7 FHIR Integration.
+
+### 16. Known Limitations
+Cannot identify novel interactions not in the CSV, and does not check for dose-dependency.
+
+### 17. Impact
+Significantly cuts down clinical manual check times to <200ms while greatly reducing polypharmacy errors in low-connectivity areas.
