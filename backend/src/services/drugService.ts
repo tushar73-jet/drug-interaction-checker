@@ -1,6 +1,6 @@
 import prisma from '../db/prismaClient';
 
-export const searchDrugs = async (query: string, limit: number = 20): Promise<string[]> => {
+export const searchDrugs = async (query: string, limit: number = 20): Promise<{ name: string }[]> => {
     if (!query || query.trim().length === 0) {
         return [];
     }
@@ -10,21 +10,21 @@ export const searchDrugs = async (query: string, limit: number = 20): Promise<st
     // Query both columns where the drug might exist
     const [drug1Results, drug2Results] = await Promise.all([
         prisma.drugInteraction.findMany({
-        where: {
-            drug1: {
-                contains: query.toLowerCase().trim()
-            }
+            where: {
+                drug1: {
+                    contains: query.toLowerCase().trim()
+                }
             },
-        select: { drug1: true },
+            select: { drug1: true },
             take: limit
         }),
         prisma.drugInteraction.findMany({
             where: {
                 drug2: {
-                contains: query.toLowerCase().trim()
-        }
+                    contains: query.toLowerCase().trim()
+                }
             },
-        select: { drug2: true },
+            select: { drug2: true },
             take: limit
         })
     ]);
@@ -37,8 +37,9 @@ export const searchDrugs = async (query: string, limit: number = 20): Promise<st
 
     // Filter to only include names that actually match the query
     const uniqueMatches = Array.from(new Set(allNames))
-        .filter(name => name.includes(query.toLowerCase().trim()))
-        .slice(0, limit);
+        .filter(name => name.toLowerCase().includes(query.toLowerCase().trim()))
+        .slice(0, limit)
+        .map(name => ({ name }));
 
     return uniqueMatches;
 };
