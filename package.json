@@ -18,11 +18,13 @@
   },
   "homepage": "https://github.com/tushar73-jet/drug-interaction-checker#readme",
   "dependencies": {
-    "@types/node": "^25.3.2",
     "csv-parser": "^3.2.0",
     "prisma": "^7.4.2",
     "sqlite3": "^5.1.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.2"
   }
 }
