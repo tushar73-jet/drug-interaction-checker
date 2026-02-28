@@ -115,7 +115,7 @@ Search drug → Select pills → "Check" → View Graph & Cards → Export PDF.
 Fully offline app, custom dataset seeded, interactive graph UI, and PDF reporting.
 
 ### 14. Team Roles & Responsibilities
-**Tushar:** Full-Stack Dev (API, DB Schema, React UI, Flow Integration)
+**Tushar:** **Bharat:** 
 
 ### 15. Future Scope & Scalability
 **Short-Term:** Combine duplicate interactions, add brand/generic name mapping. **Long-Term:** HL7 FHIR Integration.
