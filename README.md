@@ -3,8 +3,6 @@ An interactive, offline-capable web application to detect, visualize, and report
 
 ---
 
-## 🏗️ Checkpoint 1: Concept Validation (6:00 PM Evaluation)
-
 ### :one: Clear Problem Understanding
 *   **The Problem:** Patients—especially the elderly and those with chronic illnesses—frequently take multiple medications simultaneously (polypharmacy), exponentially increasing the risk of adverse drug-drug interactions.
 *   **Why it Exists:** Current checking methods are highly fragmented. Doctors are forced to rely on manual book/PDF lookups or expensive, internet-dependent EHR systems that are inaccessible in smaller clinics.
