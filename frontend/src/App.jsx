@@ -102,31 +102,32 @@ function App() {
           ))}
           {selectedDrugs.length === 0 && <p className="text-muted">No drugs selected. Search and add some above.</p>}
         </div>
-        
-        {selectedDrugs.length >= 2 && (
-          <button 
-            className="check-btn" 
-            onClick={checkInteractions}
-            disabled={loading}
-          >
-            {loading ? 'Checking...' : 'Check Interactions'}
-          </button>
-        )}
+
+        <button
+          className="check-btn"
+          onClick={checkInteractions}
+          disabled={loading || selectedDrugs.length < 2}
+        >
+          {loading ? 'Checking...' : 'Check Interactions'}
+        </button>
       </div>
 
       {interactions !== null && (
         <div className="results-section">
           <h2>Interaction Results</h2>
           {interactions.length > 0 ? (
-            interactions.map((interaction, index) => (
-              <div key={index} className={`interaction-item ${interaction.severity.toLowerCase()}`}>
-                <div className={`severity ${interaction.severity.toLowerCase()}`}>
-                  {interaction.severity}
+            interactions.map((interaction, index) => {
+              const severity = interaction.severity || 'Moderate';
+              return (
+                <div key={index} className={`interaction-item ${severity.toLowerCase()}`}>
+                  <div className={`severity ${severity.toLowerCase()}`}>
+                    {severity}
+                  </div>
+                  <h3>{interaction.drug1} & {interaction.drug2}</h3>
+                  <p>{interaction.description}</p>
                 </div>
-                <h3>{interaction.drug1} & {interaction.drug2}</h3>
-                <p>{interaction.description}</p>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="no-interactions">
               No significant interactions found between the selected drugs.

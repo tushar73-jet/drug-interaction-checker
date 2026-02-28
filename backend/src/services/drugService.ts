@@ -7,38 +7,25 @@ export const searchDrugs = async (query: string, limit: number = 20): Promise<{ 
 
     const searchTerm = `%${query.toLowerCase().trim()}%`;
 
-    // Query both columns where the drug might exist
-    const [drug1Results, drug2Results] = await Promise.all([
-        prisma.drugInteraction.findMany({
-            where: {
-                drug1: {
-                    contains: query.toLowerCase().trim()
-                }
-            },
-            select: { drug1: true },
-            take: limit
-        }),
-        prisma.drugInteraction.findMany({
-            where: {
-                drug2: {
-                    contains: query.toLowerCase().trim()
-                }
-            },
-            select: { drug2: true },
-            take: limit
-        })
-    ]);
+    // Using a raw query because Prisma + SQLite `contains` is case-sensitive by default
+    const rawQuery = `%${query}%`;
 
-    // Extract names, combine, and remove duplicates
-    const allNames = [
-        ...drug1Results.map(r => r.drug1),
-        ...drug2Results.map(r => r.drug2)
-    ];
+    // Query both columns where the drug might exist using case-insensitive LIKE
+    type DrugResult = { drug1?: string; drug2?: string };
 
-    // Filter to only include names that actually match the query
+    const results = await prisma.$queryRaw<DrugResult[]>`
+        SELECT drug1 as name FROM DrugInteraction WHERE drug1 LIKE ${rawQuery}
+        UNION
+        SELECT drug2 as name FROM DrugInteraction WHERE drug2 LIKE ${rawQuery}
+        LIMIT ${limit}
+    `;
+
+    // Map result objects back to strings and filter
+    const allNames = results.map((r: any) => r.name);
+
+    // Filter to only include names that actually match the query (case insensitive)
     const uniqueMatches = Array.from(new Set(allNames))
-        .filter(name => name.toLowerCase().includes(query.toLowerCase().trim()))
-        .slice(0, limit)
+        .filter(name => name && name.toLowerCase().includes(query.toLowerCase().trim()))
         .map(name => ({ name }));
 
     return uniqueMatches;
