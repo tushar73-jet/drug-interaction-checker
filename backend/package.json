@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/server.js",
-    "build": "npx tsc",
+    "build": "npx prisma generate && npx tsc",
     "dev": "ts-node src/server.ts",
     "seed": "ts-node src/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"

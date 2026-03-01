@@ -25,8 +25,8 @@ export const searchDrugs = async (query: string, limit: number = 20): Promise<{ 
 
     // Filter to only include names that actually match the query (case insensitive)
     const uniqueMatches = Array.from(new Set(allNames))
-        .filter(name => name && name.toLowerCase().includes(query.toLowerCase().trim()))
-        .map(name => ({ name }));
+        .filter((name: any) => name && typeof name === 'string' && name.toLowerCase().includes(query.toLowerCase().trim()))
+        .map((name: any) => ({ name: String(name) }));
 
     return uniqueMatches;
 };
