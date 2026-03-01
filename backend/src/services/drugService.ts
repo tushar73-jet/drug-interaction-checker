@@ -30,3 +30,24 @@ export const searchDrugs = async (query: string, limit: number = 20): Promise<{ 
 
     return uniqueMatches;
 };
+
+export const getStats = async () => {
+    const totalInteractions = await prisma.drugInteraction.count();
+
+    // Count unique drugs across both columns
+    const results = await prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT name) as count FROM (
+            SELECT drug1 AS name FROM DrugInteraction
+            UNION
+            SELECT drug2 AS name FROM DrugInteraction
+        )
+    `;
+
+    const totalDrugs = Number(results[0].count);
+
+    return {
+        totalDrugs,
+        totalInteractions,
+        activeClinicians: 1204 + Math.floor(Math.random() * 50), // Mock active clinicians for now
+    };
+};

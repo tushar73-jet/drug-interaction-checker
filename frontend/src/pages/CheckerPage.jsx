@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Search, Plus, X, AlertTriangle, FileText, ChevronRight, Activity, ShieldAlert } from 'lucide-react'
@@ -10,6 +10,7 @@ import '../App.css'
 function CheckerPage() {
     const { user } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
     const [query, setQuery] = useState('')
     const [suggestions, setSuggestions] = useState([])
     const [selectedDrugs, setSelectedDrugs] = useState([])
@@ -18,13 +19,30 @@ function CheckerPage() {
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
-        if (location.state?.prefillDrugs) {
+        if (location.state?.prefillDrugs && selectedDrugs.length === 0) {
             const drugsToPrefill = location.state.prefillDrugs.map(d => ({ name: d }));
             setSelectedDrugs(drugsToPrefill);
-            // Clear the state so it doesn't re-trigger on un-related re-renders
-            window.history.replaceState({}, document.title);
+            if (location.state.patientName) {
+                setPatientName(location.state.patientName);
+            }
+
+            // Trigger check if we have enough drugs after state update
+            if (drugsToPrefill.length >= 2) {
+                // Use a short timeout to ensure state has settled, or better:
+                // rely on an effect that checks for the prefill flag
+            }
+
+            // Clear location state immediately
+            navigate(location.pathname, { replace: true, state: {} });
         }
-    }, [location.state]);
+    }, [location.state, navigate, selectedDrugs.length]); // Added selectedDrugs.length to dependencies
+
+    // Auto-trigger check ONLY when prefilled from history/global search
+    useEffect(() => {
+        if (selectedDrugs.length >= 2 && !interactions && location.state?.prefillDrugs) {
+            checkInteractions();
+        }
+    }, [selectedDrugs, interactions, location.state?.prefillDrugs]); // Changed dependency to selectedDrugs and added interactions, location.state?.prefillDrugs
 
     useEffect(() => {
         const fetchSuggestions = async () => {
@@ -80,6 +98,7 @@ function CheckerPage() {
         const historyItem = {
             drugs: drugs.map(d => d.name),
             count: count,
+            patientName: patientName,
             date: new Date().toISOString()
         };
 

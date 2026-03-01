@@ -6,8 +6,8 @@ const HistoryPage = () => {
     const [history, setHistory] = useState([]);
     const navigate = useNavigate();
 
-    const handleRerun = (drugs) => {
-        navigate('/checker', { state: { prefillDrugs: drugs } });
+    const handleRerun = (item) => {
+        navigate('/checker', { state: { prefillDrugs: item.drugs, patientName: item.patientName } });
     };
 
     useEffect(() => {
@@ -51,7 +51,7 @@ const HistoryPage = () => {
                                         <Pill size={20} />
                                     </div>
                                     <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
                                             {item.drugs.map((drug, di) => (
                                                 <React.Fragment key={di}>
                                                     <span style={{ fontWeight: '700', color: 'var(--secondary)' }}>{drug}</span>
@@ -59,6 +59,11 @@ const HistoryPage = () => {
                                                 </React.Fragment>
                                             ))}
                                         </div>
+                                        {item.patientName && (
+                                            <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                                                Patient: {item.patientName}
+                                            </div>
+                                        )}
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                                 <Calendar size={14} /> {new Date(item.date).toLocaleDateString()} {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -69,7 +74,7 @@ const HistoryPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => handleRerun(item.drugs)} className="btn btn-ghost" style={{ padding: '0.5rem' }}>
+                                <button onClick={() => handleRerun(item)} className="btn btn-ghost" style={{ padding: '0.5rem' }}>
                                     <ArrowRight size={18} />
                                 </button>
                             </div>

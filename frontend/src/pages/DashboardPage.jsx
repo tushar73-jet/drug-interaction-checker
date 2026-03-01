@@ -10,18 +10,53 @@ const DashboardPage = () => {
     ]);
 
     useEffect(() => {
-        const savedHistory = JSON.parse(localStorage.getItem('interaction_history') || '[]');
-        const todayStr = new Date().toDateString();
+        const fetchStats = async () => {
+            try {
+                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${API_BASE_URL}/api/drugs/stats`);
+                const backendStats = await response.json();
 
-        const todayChecks = savedHistory.filter(item => new Date(item.date).toDateString() === todayStr).length;
-        const totalInteractions = savedHistory.reduce((sum, item) => sum + (item.count || 0), 0);
+                const savedHistory = JSON.parse(localStorage.getItem('interaction_history') || '[]');
+                const todayStr = new Date().toDateString();
+                const todayChecks = savedHistory.filter(item => new Date(item.date).toDateString() === todayStr).length;
+                const totalInteractions = savedHistory.reduce((sum, item) => sum + (item.count || 0), 0);
 
-        setStats([
-            { label: 'Checks Today', value: todayChecks.toString(), icon: <Activity className="text-primary" />, trend: todayChecks > 0 ? '+Active' : 'No Activity', color: 'var(--primary)' },
-            { label: 'Interactions Detected', value: totalInteractions.toString(), icon: <ShieldAlert className="text-danger" />, trend: 'Historical', color: 'var(--danger)' },
-            { label: 'Drugs in Database', value: '10,482+', icon: <Database className="text-info" />, trend: 'Updated Weekly', color: 'var(--info)' },
-            { label: 'Active Clinicians', value: '1,204', icon: <Users className="text-secondary" />, trend: '+5%', color: 'var(--secondary)' },
-        ]);
+                setStats([
+                    {
+                        label: 'Checks Today',
+                        value: todayChecks.toString(),
+                        icon: <Activity className="text-primary" />,
+                        trend: todayChecks > 0 ? '+Active' : 'No Activity',
+                        color: 'var(--primary)'
+                    },
+                    {
+                        label: 'Interactions Detected',
+                        value: totalInteractions.toString(),
+                        icon: <ShieldAlert className="text-danger" />,
+                        trend: 'Historical',
+                        color: 'var(--danger)'
+                    },
+                    {
+                        label: 'Drugs in Database',
+                        value: backendStats.totalDrugs?.toLocaleString() || '10,482+',
+                        icon: <Database className="text-info" />,
+                        trend: 'Live Seed',
+                        color: 'var(--info)'
+                    },
+                    {
+                        label: 'Active Clinicians',
+                        value: backendStats.activeClinicians?.toLocaleString() || '1,204',
+                        icon: <Users className="text-secondary" />,
+                        trend: '+Available',
+                        color: 'var(--secondary)'
+                    },
+                ]);
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+            }
+        };
+
+        fetchStats();
     }, []);
 
     return (
