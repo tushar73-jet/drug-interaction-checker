@@ -1,3 +1,4 @@
+import React from 'react';
 import { User, Bell, Search, Menu, Plus } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
