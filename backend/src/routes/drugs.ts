@@ -10,7 +10,7 @@ router.get('/search', async (req: Request, res: Response) => {
         const query = req.query.q as string;
 
         if (!query) {
-            return res.status(400).json({ error: "Query parameter 'q' is required for autocomplete search." });
+            return res.json({ drugs: [] });
         }
 
         const drugs = await searchDrugs(query);
@@ -18,7 +18,17 @@ router.get('/search', async (req: Request, res: Response) => {
 
     } catch (error) {
         console.error("Error in drug search route:", error);
-        res.status(500).json({ error: "Internal server error while searching for drugs." });
+        res.status(500).json({ error: "Search failed" });
+    }
+});
+
+router.get('/stats', async (req: Request, res: Response) => {
+    try {
+        const stats = await getStats();
+        res.json(stats);
+    } catch (error) {
+        console.error("Error in stats route:", error);
+        res.status(500).json({ error: "Failed to fetch stats" });
     }
 });
 

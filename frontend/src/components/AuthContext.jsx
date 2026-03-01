@@ -3,13 +3,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('doctor_user');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('doctor_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    // Sync with localStorage if needed, but the lazy initializer handles the reload case
   }, []);
 
   const login = (name) => {

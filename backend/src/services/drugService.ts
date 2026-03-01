@@ -8,27 +8,23 @@ export const searchDrugs = async (query: string, limit: number = 20): Promise<{ 
     const searchTerm = `%${query.toLowerCase().trim()}%`;
 
     // Using a raw query because Prisma + SQLite `contains` is case-sensitive by default
-    const rawQuery = `%${query}%`;
+    const startsWithQuery = `${query}%`;
+    const containsQuery = `%${query}%`;
 
-    // Query both columns where the drug might exist using case-insensitive LIKE
-    type DrugResult = { drug1?: string; drug2?: string };
+    type DrugResult = { name: string; starts_with: number };
 
+    // Use a UNION with a helper column to rank "starts with" higher
     const results = await prisma.$queryRaw<DrugResult[]>`
-        SELECT drug1 as name FROM DrugInteraction WHERE drug1 LIKE ${rawQuery}
-        UNION
-        SELECT drug2 as name FROM DrugInteraction WHERE drug2 LIKE ${rawQuery}
+        SELECT name, MAX(starts_with) as starts_with FROM (
+            SELECT drug1 as name, (CASE WHEN drug1 LIKE ${startsWithQuery} THEN 1 ELSE 0 END) as starts_with FROM DrugInteraction WHERE drug1 LIKE ${containsQuery}
+            UNION ALL
+            SELECT drug2 as name, (CASE WHEN drug2 LIKE ${startsWithQuery} THEN 1 ELSE 0 END) as starts_with FROM DrugInteraction WHERE drug2 LIKE ${containsQuery}
+        ) GROUP BY name
+        ORDER BY starts_with DESC, name ASC
         LIMIT ${limit}
     `;
 
-    // Map result objects back to strings and filter
-    const allNames = results.map((r: any) => r.name);
-
-    // Filter to only include names that actually match the query (case insensitive)
-    const uniqueMatches = Array.from(new Set(allNames))
-        .filter((name: any) => name && typeof name === 'string' && name.toLowerCase().includes(query.toLowerCase().trim()))
-        .map((name: any) => ({ name: String(name) }));
-
-    return uniqueMatches;
+    return results.map(r => ({ name: r.name }));
 };
 
 export const getStats = async () => {
