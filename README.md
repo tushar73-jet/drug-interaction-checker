@@ -108,8 +108,8 @@ Scope definition → Express API/Schema → React UI → Graph Integration → T
 ### 11. End-to-End Workflow
 Search drug → Select pills → "Check" → View Graph & Cards → Export PDF.
 
-### 12. Demo & Video
-**Repository:** [GitHub](https://github.com/tushar73-jet/drug-interaction-checker)
+### 12.  Video and ppt google drive link
+ https://drive.google.com/drive/folders/1f5fgTwGgn0I2PrHZlaqlDPHf3OOAAEBz
 
 ### 13. Hackathon Deliverables Summary
 Fully offline app, custom dataset seeded, interactive graph UI, and PDF reporting.
