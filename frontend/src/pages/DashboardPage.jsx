@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pill, ShieldAlert, Database, ArrowUpRight, Activity, Users } from 'lucide-react';
 
 const DashboardPage = () => {
-    const stats = [
-        { label: 'Checks Today', value: '42', icon: <Activity className="text-primary" />, trend: '+12%', color: 'var(--primary)' },
-        { label: 'Dangerous Pairs Found', value: '8', icon: <ShieldAlert className="text-danger" />, trend: 'High Priority', color: 'var(--danger)' },
+    const [stats, setStats] = useState([
+        { label: 'Checks Today', value: '-', icon: <Activity className="text-primary" />, trend: 'Loading...', color: 'var(--primary)' },
+        { label: 'Dangerous Pairs Found', value: '-', icon: <ShieldAlert className="text-danger" />, trend: 'Loading...', color: 'var(--danger)' },
         { label: 'Drugs in Database', value: '10,482+', icon: <Database className="text-info" />, trend: 'Updated Weekly', color: 'var(--info)' },
         { label: 'Active Clinicians', value: '1,204', icon: <Users className="text-secondary" />, trend: '+5%', color: 'var(--secondary)' },
-    ];
+    ]);
+
+    useEffect(() => {
+        const savedHistory = JSON.parse(localStorage.getItem('interaction_history') || '[]');
+        const todayStr = new Date().toDateString();
+
+        const todayChecks = savedHistory.filter(item => new Date(item.date).toDateString() === todayStr).length;
+        const totalInteractions = savedHistory.reduce((sum, item) => sum + (item.count || 0), 0);
+
+        setStats([
+            { label: 'Checks Today', value: todayChecks.toString(), icon: <Activity className="text-primary" />, trend: todayChecks > 0 ? '+Active' : 'No Activity', color: 'var(--primary)' },
+            { label: 'Interactions Detected', value: totalInteractions.toString(), icon: <ShieldAlert className="text-danger" />, trend: 'Historical', color: 'var(--danger)' },
+            { label: 'Drugs in Database', value: '10,482+', icon: <Database className="text-info" />, trend: 'Updated Weekly', color: 'var(--info)' },
+            { label: 'Active Clinicians', value: '1,204', icon: <Users className="text-secondary" />, trend: '+5%', color: 'var(--secondary)' },
+        ]);
+    }, []);
 
     return (
         <div className="animate-fade-in">

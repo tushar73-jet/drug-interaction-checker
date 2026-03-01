@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { History, Trash2, Calendar, Pill, ShieldAlert, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const HistoryPage = () => {
     const [history, setHistory] = useState([]);
+    const navigate = useNavigate();
+
+    const handleRerun = (drugs) => {
+        navigate('/checker', { state: { prefillDrugs: drugs } });
+    };
 
     useEffect(() => {
         const savedHistory = localStorage.getItem('interaction_history');
@@ -63,7 +69,7 @@ const HistoryPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <button className="btn btn-ghost" style={{ padding: '0.5rem' }}>
+                                <button onClick={() => handleRerun(item.drugs)} className="btn btn-ghost" style={{ padding: '0.5rem' }}>
                                     <ArrowRight size={18} />
                                 </button>
                             </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Search, Plus, X, AlertTriangle, FileText, ChevronRight, Activity } from 'lucide-react'
@@ -8,11 +9,22 @@ import '../App.css'
 
 function CheckerPage() {
     const { user } = useAuth();
+    const location = useLocation();
     const [query, setQuery] = useState('')
     const [suggestions, setSuggestions] = useState([])
     const [selectedDrugs, setSelectedDrugs] = useState([])
+    const [patientName, setPatientName] = useState('')
     const [interactions, setInteractions] = useState(null)
     const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        if (location.state?.prefillDrugs) {
+            const drugsToPrefill = location.state.prefillDrugs.map(d => ({ name: d }));
+            setSelectedDrugs(drugsToPrefill);
+            // Clear the state so it doesn't re-trigger on un-related re-renders
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         const fetchSuggestions = async () => {
@@ -150,10 +162,15 @@ function CheckerPage() {
         doc.text(`Specialty: Clinical Pharmacology`, 20, 62)
 
         doc.setFont('helvetica', 'bold')
-        doc.text('DRUG PROFILE UNDER ANALYSIS', 100, 50)
+        doc.text('PATIENT PROFILE', 100, 50)
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Patient: ${patientName || 'Unspecified'}`, 100, 57)
+
+        doc.setFont('helvetica', 'bold')
+        doc.text('DRUG PROFILE UNDER ANALYSIS', 100, 67)
         doc.setFont('helvetica', 'normal')
         const drugNames = selectedDrugs.map(d => d.name).join(', ')
-        doc.text(drugNames, 100, 57, { maxWidth: 90 })
+        doc.text(drugNames, 100, 74, { maxWidth: 90 })
 
         // Interactions Table
         const tableColumn = ["Drug Pair", "Severity", "Clinical Risk Description"];
@@ -286,6 +303,24 @@ function CheckerPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div className="card">
                         <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Patient Profile</h3>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <input
+                                type="text"
+                                placeholder="Enter Patient Name (Optional)"
+                                value={patientName}
+                                onChange={(e) => setPatientName(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    borderRadius: '0.5rem',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '0.9375rem',
+                                    outline: 'none'
+                                }}
+                            />
+                        </div>
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             {selectedDrugs.map((drug, index) => (
                                 <div key={index} style={{
