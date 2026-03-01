@@ -11,16 +11,21 @@ export const searchDrugs = async (query: string, limit: number = 20): Promise<{ 
     const startsWithQuery = `${query}%`;
     const containsQuery = `%${query}%`;
 
-    type DrugResult = { name: string; starts_with: number };
+    type DrugResult = { name: string; rank: number };
 
-    // Use a UNION with a helper column to rank "starts with" higher
+    // Simpler UNION approach for SQLite ranking
     const results = await prisma.$queryRaw<DrugResult[]>`
-        SELECT name, MAX(starts_with) as starts_with FROM (
-            SELECT drug1 as name, (CASE WHEN drug1 LIKE ${startsWithQuery} THEN 1 ELSE 0 END) as starts_with FROM DrugInteraction WHERE drug1 LIKE ${containsQuery}
+        SELECT name, MIN(rank) as rank FROM (
+            SELECT drug1 as name, 1 as rank FROM DrugInteraction WHERE drug1 LIKE ${startsWithQuery}
             UNION ALL
-            SELECT drug2 as name, (CASE WHEN drug2 LIKE ${startsWithQuery} THEN 1 ELSE 0 END) as starts_with FROM DrugInteraction WHERE drug2 LIKE ${containsQuery}
-        ) GROUP BY name
-        ORDER BY starts_with DESC, name ASC
+            SELECT drug2 as name, 1 as rank FROM DrugInteraction WHERE drug2 LIKE ${startsWithQuery}
+            UNION ALL
+            SELECT drug1 as name, 2 as rank FROM DrugInteraction WHERE drug1 LIKE ${containsQuery}
+            UNION ALL
+            SELECT drug2 as name, 2 as rank FROM DrugInteraction WHERE drug2 LIKE ${containsQuery}
+        ) AS combined
+        GROUP BY name
+        ORDER BY rank ASC, name ASC
         LIMIT ${limit}
     `;
 

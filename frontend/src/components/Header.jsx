@@ -12,7 +12,7 @@ const Header = ({ onMenuClick }) => {
 
     React.useEffect(() => {
         const fetchSuggestions = async () => {
-            if (query.length < 2) {
+            if (query.length < 1) {
                 setSuggestions([]);
                 return;
             }
