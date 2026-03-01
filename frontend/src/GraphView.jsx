@@ -40,6 +40,7 @@ const GraphView = ({ drugs, interactions }) => {
 
     // Generate edges based on interactions
     const initialEdges = useMemo(() => {
+        if (!interactions) return [];
         return interactions.map((interaction, index) => {
             // Color-code the edges based on severity
             const severity = (interaction.severity || 'Moderate').toLowerCase();

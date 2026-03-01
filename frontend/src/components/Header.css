@@ -1,0 +1,124 @@
+.header {
+    height: 70px;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+@media (min-width: 768px) {
+    .header {
+        padding: 0 2rem;
+    }
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: var(--secondary);
+    border-radius: 8px;
+}
+
+.menu-toggle:hover {
+    background: var(--primary-light);
+}
+
+@media (min-width: 1024px) {
+    .menu-toggle {
+        display: none;
+    }
+}
+
+.search-bar-placeholder {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+}
+
+@media (min-width: 768px) {
+    .search-bar-placeholder {
+        display: flex;
+    }
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .header-right {
+        gap: 1.5rem;
+    }
+}
+
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: var(--danger);
+    border: 2px solid white;
+    border-radius: 50%;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border);
+}
+
+@media (min-width: 768px) {
+    .user-profile {
+        padding-left: 1.5rem;
+    }
+}
+
+.user-info {
+    text-align: right;
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .user-info {
+        display: block;
+    }
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
