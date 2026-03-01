@@ -1,7 +1,7 @@
 # 💊 Drug Interaction Checker
 An interactive, offline-capable web application to detect, visualize, and report dangerous drug-drug interactions.
 
----
+### : Hosted Link : https://drug-interaction-checker-dun.vercel.app/
 
 ### :one: Clear Problem Understanding
 *   **The Problem:** Patients—especially the elderly and those with chronic illnesses—frequently take multiple medications simultaneously (polypharmacy), exponentially increasing the risk of adverse drug-drug interactions.
