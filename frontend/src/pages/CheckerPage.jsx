@@ -223,7 +223,7 @@ function CheckerPage() {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: '2rem', alignItems: 'start' }}>
+            <div className="checker-layout-grid">
                 <div className="card" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.125rem' }}>Visual Interaction Map</h3>
@@ -299,7 +299,7 @@ function CheckerPage() {
             {interactions !== null && (
                 <div style={{ marginTop: '2.5rem' }}>
                     <h3 className="section-title">Clinical Findings</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+                    <div className="clinical-findings-grid">
                         {interactions.length > 0 ? (
                             interactions.map((interaction, index) => {
                                 const severity = interaction.severity || 'Moderate';

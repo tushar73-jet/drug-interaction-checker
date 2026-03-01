@@ -35,7 +35,7 @@ const AboutPage = () => {
                     </p>
                 </section>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div className="about-grid">
                     <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <Globe size={24} className="text-muted" />
                         <div>

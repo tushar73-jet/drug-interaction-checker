@@ -47,7 +47,7 @@ const DashboardPage = () => {
                 ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginTop: '2.5rem' }}>
+            <div className="dashboard-grid">
                 <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.125rem' }}>System Integrity Status</h3>
