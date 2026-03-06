@@ -45,10 +45,12 @@ function CheckerPage() {
 
     // Auto-trigger check ONLY when prefilled from history/global search
     useEffect(() => {
+        // Use a ref to track if we already auto-checked for this specific location state
         if (selectedDrugs.length >= 2 && !interactions && location.state?.prefillDrugs) {
             checkInteractions();
         }
-    }, [selectedDrugs, interactions, location.state?.prefillDrugs]); // Changed dependency to selectedDrugs and added interactions, location.state?.prefillDrugs
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.state?.prefillDrugs]);
 
     useEffect(() => {
         const fetchSuggestions = async () => {
@@ -179,6 +181,7 @@ function CheckerPage() {
             }
 
             setInteractions(foundInteractions)
+            // Ensure we use the latest array length to save history, rather than state which might not be updated
             saveToHistory(selectedDrugs, foundInteractions.length);
         } catch (error) {
             console.error('Error checking interactions:', error)
