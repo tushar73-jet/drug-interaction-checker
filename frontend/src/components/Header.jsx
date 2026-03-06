@@ -1,5 +1,5 @@
-import React from 'react';
-import { User, Bell, Search, Menu, Plus } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { User, Bell, Search, Menu, Plus, Sun, Moon } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './Header.css';
@@ -7,13 +7,30 @@ import './Header.css';
 const Header = ({ onMenuClick }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [query, setQuery] = React.useState('');
-    const [suggestions, setSuggestions] = React.useState([]);
+    const [query, setQuery] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [theme, setTheme] = useState(() => {
+        return localStorage.getItem('theme') || 'light';
+    });
+    const searchCache = useRef({});
 
-    React.useEffect(() => {
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    };
+
+    useEffect(() => {
         const fetchSuggestions = async () => {
             if (query.length < 1) {
                 setSuggestions([]);
+                return;
+            }
+            if (searchCache.current[query]) {
+                setSuggestions(searchCache.current[query]);
                 return;
             }
             try {
@@ -21,6 +38,7 @@ const Header = ({ onMenuClick }) => {
                 const response = await fetch(`${API_BASE_URL}/api/drugs/search?q=${query}`);
                 if (response.ok) {
                     const data = await response.json();
+                    searchCache.current[query] = data.drugs || [];
                     setSuggestions(data.drugs || []);
                 }
             } catch (error) {
@@ -99,6 +117,23 @@ const Header = ({ onMenuClick }) => {
             </div>
 
             <div className="header-right">
+                <button
+                    onClick={toggleTheme}
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '0.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '8px'
+                    }}
+                    title="Toggle Theme"
+                >
+                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                </button>
                 <div className="notification-bell">
                     <Bell size={20} />
                     <span className="notification-badge"></span>

@@ -10,6 +10,19 @@
   --success: #10b981;
   --border-radius: 12px;
   --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+}
+
+:root[data-theme="dark"] {
+  --primary-color: #818cf8;
+  --primary-hover: #6366f1;
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --input-bg: #0f172a;
+  --input-border: #334155;
 }
 
 body {
@@ -51,11 +64,13 @@ header h1 {
 input[type="text"] {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--input-border);
+  background-color: var(--input-bg);
+  color: var(--text-main);
   border-radius: 8px;
   font-size: 1rem;
   box-sizing: border-box;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background-color 0.3s, color 0.3s;
 }
 
 input[type="text"]:focus {
@@ -86,7 +101,7 @@ input[type="text"]:focus {
 }
 
 .suggestion-item:hover {
-  background-color: #f1f5f9;
+  background-color: var(--primary-light, #f1f5f9);
 }
 
 .selected-drugs {
@@ -158,13 +173,13 @@ input[type="text"]:focus {
   border-left: 4px solid var(--warning);
   padding: 1rem;
   margin-bottom: 1rem;
-  background: #fffbeb;
+  background: var(--bg-main, #fffbeb);
   border-radius: 4px;
 }
 
 .interaction-item.major {
   border-left-color: var(--danger);
-  background: #fef2f2;
+  background: var(--bg-card, #fef2f2);
 }
 
 .interaction-item h3 {

@@ -1,35 +1,44 @@
 import prisma from '../db/prismaClient';
 
+let drugCache: string[] | null = null;
+
+const loadDrugCache = async () => {
+    if (drugCache !== null) return;
+    const results = await prisma.$queryRaw<{ name: string }[]>`
+        SELECT DISTINCT name FROM (
+            SELECT drug1 AS name FROM DrugInteraction
+            UNION
+            SELECT drug2 AS name FROM DrugInteraction
+        )
+    `;
+    drugCache = results.map(r => r.name).sort();
+};
+
 export const searchDrugs = async (query: string, limit: number = 20): Promise<{ name: string }[]> => {
     if (!query || query.trim().length === 0) {
         return [];
     }
 
-    const searchTerm = `%${query.toLowerCase().trim()}%`;
+    await loadDrugCache();
 
-    // Using a raw query because Prisma + SQLite `contains` is case-sensitive by default
-    const startsWithQuery = `${query}%`;
-    const containsQuery = `%${query}%`;
+    const normalizedQuery = query.toLowerCase().trim();
 
-    type DrugResult = { name: string; rank: number };
+    const startsWith: string[] = [];
+    const contains: string[] = [];
 
-    // Simpler UNION approach for SQLite ranking
-    const results = await prisma.$queryRaw<DrugResult[]>`
-        SELECT name, MIN(rank) as rank FROM (
-            SELECT drug1 as name, 1 as rank FROM DrugInteraction WHERE drug1 LIKE ${startsWithQuery}
-            UNION ALL
-            SELECT drug2 as name, 1 as rank FROM DrugInteraction WHERE drug2 LIKE ${startsWithQuery}
-            UNION ALL
-            SELECT drug1 as name, 2 as rank FROM DrugInteraction WHERE drug1 LIKE ${containsQuery}
-            UNION ALL
-            SELECT drug2 as name, 2 as rank FROM DrugInteraction WHERE drug2 LIKE ${containsQuery}
-        ) AS combined
-        GROUP BY name
-        ORDER BY rank ASC, name ASC
-        LIMIT ${limit}
-    `;
+    for (const drug of drugCache!) {
+        const lowerDrug = drug.toLowerCase();
+        if (lowerDrug.startsWith(normalizedQuery)) {
+            startsWith.push(drug);
+        } else if (lowerDrug.includes(normalizedQuery)) {
+            contains.push(drug);
+        }
+    }
 
-    return results.map(r => ({ name: r.name }));
+    // Combine exact startsWith hits first, then include partial matches
+    const combined = [...startsWith, ...contains].slice(0, limit);
+
+    return combined.map(name => ({ name }));
 };
 
 export const getStats = async () => {

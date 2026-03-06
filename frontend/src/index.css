@@ -31,6 +31,27 @@
   --tablet: 1024px;
 }
 
+:root[data-theme="dark"] {
+  --primary: #14b8a6;
+  --primary-hover: #0d9488;
+  --primary-light: #042f2e;
+  --secondary: #cbd5e1;
+  --accent: #2dd4bf;
+
+  --bg-main: #0f172a;
+  --bg-card: #1e293b;
+  --bg-sidebar: #0f172a;
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-on-dark: #f8fafc;
+
+  --border: #334155;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -43,6 +64,7 @@ body {
   color: var(--text-main);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 a {
@@ -109,7 +131,7 @@ h4 {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   padding: 1.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .card:hover {

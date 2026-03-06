@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, Trash2, Calendar, Pill, ShieldAlert, ArrowRight } from 'lucide-react';
+import { History, Trash2, Calendar, Pill, ShieldAlert, ArrowRight, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const HistoryPage = () => {
@@ -22,6 +22,36 @@ const HistoryPage = () => {
         setHistory([]);
     };
 
+    const deleteItem = (indexToDelete) => {
+        const newHistory = history.filter((_, idx) => idx !== indexToDelete);
+        setHistory(newHistory);
+        localStorage.setItem('interaction_history', JSON.stringify(newHistory));
+    };
+
+    const exportToCSV = () => {
+        if (history.length === 0) return;
+
+        const headers = ['Date', 'Patient Name', 'Drugs Searched', 'Interactions Found'];
+        const csvRows = [headers.join(',')];
+
+        history.forEach(item => {
+            const date = new Date(item.date).toLocaleString().replace(/,/g, '');
+            const patient = item.patientName || 'N/A';
+            const drugs = item.drugs.join(' + ').replace(/,/g, ' ');
+            const count = item.count || 0;
+            csvRows.push(`${date},${patient},${drugs},${count}`);
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `clinical_history_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -30,9 +60,14 @@ const HistoryPage = () => {
                     <p style={{ color: 'var(--text-muted)' }}>Review your past 10 clinical interaction checks.</p>
                 </div>
                 {history.length > 0 && (
-                    <button onClick={clearHistory} className="btn btn-ghost" style={{ color: 'var(--danger)' }}>
-                        <Trash2 size={18} /> Clear All
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={exportToCSV} className="btn btn-ghost" style={{ color: 'var(--primary)' }}>
+                            <Download size={18} /> Export CSV
+                        </button>
+                        <button onClick={clearHistory} className="btn btn-ghost" style={{ color: 'var(--danger)' }}>
+                            <Trash2 size={18} /> Clear All
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -74,9 +109,14 @@ const HistoryPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => handleRerun(item)} className="btn btn-ghost" style={{ padding: '0.5rem' }}>
-                                    <ArrowRight size={18} />
-                                </button>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button onClick={() => deleteItem(index)} className="btn btn-ghost" style={{ padding: '0.5rem', color: 'var(--danger)', opacity: 0.7 }}>
+                                        <Trash2 size={18} />
+                                    </button>
+                                    <button onClick={() => handleRerun(item)} className="btn btn-ghost" style={{ padding: '0.5rem', color: 'var(--primary)' }}>
+                                        <ArrowRight size={18} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )).reverse()

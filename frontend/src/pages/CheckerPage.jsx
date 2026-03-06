@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Search, Plus, X, AlertTriangle, FileText, ChevronRight, Activity, ShieldAlert } from 'lucide-react'
+import { Search, Plus, X, AlertTriangle, FileText, ChevronRight, Activity, ShieldAlert, Save, User as UserIcon } from 'lucide-react'
 import GraphView from '../GraphView'
 import { useAuth } from '../components/AuthContext'
 import '../App.css'
@@ -17,6 +17,12 @@ function CheckerPage() {
     const [patientName, setPatientName] = useState('')
     const [interactions, setInteractions] = useState(null)
     const [loading, setLoading] = useState(false)
+    const searchCache = React.useRef({})
+
+    const [severityFilter, setSeverityFilter] = useState('All');
+    const [savedProfiles, setSavedProfiles] = useState(() => {
+        return JSON.parse(localStorage.getItem('saved_patient_profiles') || '[]');
+    });
 
     useEffect(() => {
         if (location.state?.prefillDrugs && selectedDrugs.length === 0) {
@@ -50,6 +56,10 @@ function CheckerPage() {
                 setSuggestions([])
                 return
             }
+            if (searchCache.current[query]) {
+                setSuggestions(searchCache.current[query])
+                return
+            }
             let foundDrugs = [];
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -73,6 +83,7 @@ function CheckerPage() {
                     d.name.toLowerCase().includes(query.toLowerCase())
                 );
             }
+            searchCache.current[query] = foundDrugs;
             setSuggestions(foundDrugs)
         }
 
@@ -105,6 +116,31 @@ function CheckerPage() {
         const savedHistory = JSON.parse(localStorage.getItem('interaction_history') || '[]');
         const newHistory = [...savedHistory, historyItem].slice(-10); // Keep last 10
         localStorage.setItem('interaction_history', JSON.stringify(newHistory));
+    };
+
+    const saveProfile = () => {
+        if (!patientName.trim() || selectedDrugs.length === 0) return;
+        const newProfile = {
+            id: Date.now(),
+            name: patientName.trim(),
+            drugs: selectedDrugs.map(d => d.name),
+            date: new Date().toISOString()
+        };
+        const updated = [...savedProfiles, newProfile];
+        setSavedProfiles(updated);
+        localStorage.setItem('saved_patient_profiles', JSON.stringify(updated));
+    };
+
+    const loadProfile = (profile) => {
+        setPatientName(profile.name);
+        setSelectedDrugs(profile.drugs.map(d => ({ name: d })));
+        setInteractions(null);
+    };
+
+    const deleteProfile = (id) => {
+        const updated = savedProfiles.filter(p => p.id !== id);
+        setSavedProfiles(updated);
+        localStorage.setItem('saved_patient_profiles', JSON.stringify(updated));
     };
 
     const checkInteractions = async () => {
@@ -324,20 +360,60 @@ function CheckerPage() {
                         <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Patient Profile</h3>
 
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <input
-                                type="text"
-                                placeholder="Enter Patient Name (Optional)"
-                                value={patientName}
-                                onChange={(e) => setPatientName(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem',
-                                    borderRadius: '0.5rem',
-                                    border: '1px solid var(--border)',
-                                    fontSize: '0.9375rem',
-                                    outline: 'none'
-                                }}
-                            />
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Enter Patient Name (Optional)"
+                                    value={patientName}
+                                    onChange={(e) => setPatientName(e.target.value)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '0.75rem',
+                                        borderRadius: '0.5rem',
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--input-bg)',
+                                        color: 'var(--text-main)',
+                                        fontSize: '0.9375rem',
+                                        outline: 'none'
+                                    }}
+                                />
+                                <button
+                                    className="btn btn-ghost"
+                                    onClick={saveProfile}
+                                    disabled={!patientName.trim()}
+                                    title="Save Patient Profile"
+                                    style={{ padding: '0.75rem' }}
+                                >
+                                    <Save size={20} />
+                                </button>
+                            </div>
+
+                            {savedProfiles.length > 0 && (
+                                <div style={{ marginTop: '0.75rem' }}>
+                                    <select
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                loadProfile(savedProfiles.find(p => p.id.toString() === e.target.value));
+                                                e.target.value = '';
+                                            }
+                                        }}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.5rem',
+                                            borderRadius: '0.5rem',
+                                            border: '1px solid var(--border)',
+                                            background: 'var(--input-bg)',
+                                            color: 'var(--text-main)',
+                                            fontSize: '0.875rem'
+                                        }}
+                                    >
+                                        <option value="">Load Saved Profile...</option>
+                                        {savedProfiles.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name} ({p.drugs.length} drugs)</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -393,27 +469,55 @@ function CheckerPage() {
 
             {interactions !== null && (
                 <div style={{ marginTop: '2.5rem' }}>
-                    <h3 className="section-title">Clinical Findings</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                        <h3 className="section-title" style={{ marginBottom: 0 }}>Clinical Findings</h3>
+
+                        {interactions.length > 0 && (
+                            <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--card-bg)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
+                                {['All', 'Major', 'Moderate', 'Minor'].map(filter => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => setSeverityFilter(filter)}
+                                        style={{
+                                            padding: '0.25rem 0.75rem',
+                                            borderRadius: '0.25rem',
+                                            border: 'none',
+                                            fontSize: '0.875rem',
+                                            fontWeight: '600',
+                                            cursor: 'pointer',
+                                            background: severityFilter === filter ? 'var(--primary)' : 'transparent',
+                                            color: severityFilter === filter ? 'white' : 'var(--text-muted)'
+                                        }}
+                                    >
+                                        {filter}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     <div className="clinical-findings-grid">
                         {interactions.length > 0 ? (
-                            interactions.map((interaction, index) => {
-                                const severity = interaction.severity || 'Moderate';
-                                const severityClass = `badge-${severity.toLowerCase()}`;
-                                return (
-                                    <div key={index} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: `4px solid ${severity === 'Major' ? 'var(--danger)' : severity === 'Moderate' ? 'var(--warning)' : 'var(--success)'}` }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span className={`badge ${severityClass}`}>{severity}</span>
-                                            <AlertTriangle size={18} color={severity === 'Major' ? 'var(--danger)' : 'var(--warning)'} />
+                            interactions
+                                .filter(interaction => severityFilter === 'All' || (interaction.severity || 'Moderate').toLowerCase() === severityFilter.toLowerCase())
+                                .map((interaction, index) => {
+                                    const severity = interaction.severity || 'Moderate';
+                                    const severityClass = `badge-${severity.toLowerCase()}`;
+                                    return (
+                                        <div key={index} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: `4px solid ${severity === 'Major' ? 'var(--danger)' : severity === 'Moderate' ? 'var(--warning)' : 'var(--success)'}` }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span className={`badge ${severityClass}`}>{severity}</span>
+                                                <AlertTriangle size={18} color={severity === 'Major' ? 'var(--danger)' : 'var(--warning)'} />
+                                            </div>
+                                            <div style={{ fontWeight: '700', fontSize: '1.125rem' }}>
+                                                {interaction.drug1} & {interaction.drug2}
+                                            </div>
+                                            <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                                                {interaction.description}
+                                            </p>
                                         </div>
-                                        <div style={{ fontWeight: '700', fontSize: '1.125rem' }}>
-                                            {interaction.drug1} & {interaction.drug2}
-                                        </div>
-                                        <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                                            {interaction.description}
-                                        </p>
-                                    </div>
-                                );
-                            })
+                                    );
+                                })
                         ) : (
                             <div className="card" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem' }}>
                                 <ShieldAlert size={40} style={{ color: 'var(--success)', marginBottom: '1rem', opacity: 0.5 }} />
