@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -17,7 +17,7 @@ function CheckerPage() {
     const [patientName, setPatientName] = useState('')
     const [interactions, setInteractions] = useState(null)
     const [loading, setLoading] = useState(false)
-    const searchCache = React.useRef({})
+    const searchCache = useRef({})
 
     const [severityFilter, setSeverityFilter] = useState('All');
     const [savedProfiles, setSavedProfiles] = useState(() => {
