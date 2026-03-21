@@ -58,6 +58,5 @@ export const getStats = async () => {
     return {
         totalDrugs,
         totalInteractions,
-        activeClinicians: 1204 + Math.floor(Math.random() * 50), // Mock active clinicians for now
     };
 };

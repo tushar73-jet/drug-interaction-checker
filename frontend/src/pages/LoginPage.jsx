@@ -46,8 +46,8 @@ const LoginPage = () => {
                     <ShieldAlert size={32} />
                 </div>
 
-                <h1 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>MedCheck AI</h1>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem' }}>Clinical Decision Support System</p>
+                <h1 style={{ fontSize: '1.25rem', marginBottom: '0.25rem', fontWeight: '800' }}>MedCheck</h1>
+                <p style={{ color: 'var(--primary)', fontWeight: '600', fontSize: '0.875rem', marginBottom: '2rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Drug Interaction Analyzer</p>
 
                 <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
                     <div style={{ marginBottom: '1.25rem' }}>

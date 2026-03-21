@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Pill, History, Info, LogOut, ShieldAlert, X } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import './Sidebar.css';
+
 
 const Sidebar = ({ isOpen, onClose, onNavItemClick }) => {
     const { logout } = useAuth();
@@ -27,7 +27,7 @@ const Sidebar = ({ isOpen, onClose, onNavItemClick }) => {
                         <div className="sidebar-logo">
                             <ShieldAlert size={20} />
                         </div>
-                        <span className="sidebar-title">MedCheck AI</span>
+                        <span className="sidebar-title">MedCheck — Drug Interaction Analyzer</span>
                     </div>
                     <button className="close-btn" onClick={onClose}>
                         <X size={20} />

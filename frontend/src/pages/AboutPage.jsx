@@ -5,7 +5,7 @@ const AboutPage = () => {
     return (
         <div className="animate-fade-in" style={{ maxWidth: '800px' }}>
             <div style={{ marginBottom: '2.5rem' }}>
-                <h2 className="section-title"><Info size={24} /> About MedCheck AI</h2>
+                <h2 className="section-title"><Info size={24} /> About MedCheck</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem' }}>
                     A professional-grade clinical decision support tool designed to enhance patient safety through real-time drug interaction monitoring.
                 </p>
@@ -31,7 +31,7 @@ const AboutPage = () => {
                         <ShieldCheck size={20} className="text-success" /> Clinical Compliance
                     </h3>
                     <p style={{ color: 'var(--text-main)' }}>
-                        MedCheck AI is designed with HIPAA and GDPR standards in mind. No patient-identifiable information (PII) is stored on our servers. All interaction checks are processed using anonymized drug identifiers.
+                        MedCheck is designed with HIPAA and GDPR standards in mind. No patient-identifiable information (PII) is stored on our servers. All interaction checks are processed using anonymized drug identifiers.
                     </p>
                 </section>
 
@@ -40,21 +40,21 @@ const AboutPage = () => {
                         <Globe size={24} className="text-muted" />
                         <div>
                             <div style={{ fontWeight: '600' }}>Official Website</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--primary)' }}>www.medcheck.ai</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--primary)' }}>www.medcheck.org</div>
                         </div>
                     </div>
                     <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <Mail size={24} className="text-muted" />
                         <div>
                             <div style={{ fontWeight: '600' }}>Clinical Support</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--primary)' }}>support@medcheck.ai</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--primary)' }}>support@medcheck.org</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div style={{ marginTop: '3rem', textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                &copy; 2026 MedCheck AI Inc. Version 2.4.0-stable
+                &copy; 2026 MedCheck — Drug Interaction Analyzer. Version 2.4.0-stable
             </div>
         </div>
     );

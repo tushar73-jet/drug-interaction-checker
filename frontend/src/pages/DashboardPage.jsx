@@ -4,9 +4,8 @@ import { Pill, ShieldAlert, Database, ArrowUpRight, Activity, Users } from 'luci
 const DashboardPage = () => {
     const [stats, setStats] = useState([
         { label: 'Checks Today', value: '-', icon: <Activity className="text-primary" />, trend: 'Loading...', color: 'var(--primary)' },
-        { label: 'Dangerous Pairs Found', value: '-', icon: <ShieldAlert className="text-danger" />, trend: 'Loading...', color: 'var(--danger)' },
+        { label: 'Interactions Detected', value: '-', icon: <ShieldAlert className="text-danger" />, trend: 'Loading...', color: 'var(--danger)' },
         { label: 'Drugs in Database', value: '10,482+', icon: <Database className="text-info" />, trend: 'Updated Weekly', color: 'var(--info)' },
-        { label: 'Active Clinicians', value: '1,204', icon: <Users className="text-secondary" />, trend: '+5%', color: 'var(--secondary)' },
     ]);
 
     useEffect(() => {
@@ -42,13 +41,6 @@ const DashboardPage = () => {
                         icon: <Database className="text-info" />,
                         trend: 'Live Seed',
                         color: 'var(--info)'
-                    },
-                    {
-                        label: 'Active Clinicians',
-                        value: backendStats.activeClinicians?.toLocaleString() || '1,204',
-                        icon: <Users className="text-secondary" />,
-                        trend: '+Available',
-                        color: 'var(--secondary)'
                     },
                 ]);
             } catch (error) {
