@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Pill, History, Info, LogOut, ShieldAlert, X } from 'lucide-react';
 import { useAuth } from './AuthContext';
+import './Sidebar.css';
 
 
 const Sidebar = ({ isOpen, onClose, onNavItemClick }) => {
