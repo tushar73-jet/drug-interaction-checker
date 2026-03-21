@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { User, Bell, Search, Menu, Plus, Sun, Moon } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { UserButton } from '@clerk/react';
 import './Header.css';
 
 const Header = ({ onMenuClick }) => {
@@ -80,39 +81,6 @@ const Header = ({ onMenuClick }) => {
                             }}
                         />
                     </div>
-                    {suggestions.length > 0 && (
-                        <div className="search-suggestions card" style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            right: 0,
-                            zIndex: 1000,
-                            marginTop: '0.5rem',
-                            maxHeight: '300px',
-                            overflowY: 'auto',
-                            padding: '0.5rem'
-                        }}>
-                            {suggestions.map((drug, index) => (
-                                <div
-                                    key={index}
-                                    onClick={() => handleSelect(drug)}
-                                    style={{
-                                        padding: '0.75rem 1rem',
-                                        borderRadius: '0.5rem',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        color: 'var(--secondary)'
-                                    }}
-                                    className="suggestion-item"
-                                >
-                                    <span style={{ fontWeight: '600' }}>{drug.name}</span>
-                                    <Plus size={14} className="text-muted" />
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -139,16 +107,14 @@ const Header = ({ onMenuClick }) => {
                     <span className="notification-badge"></span>
                 </div>
 
-                <div className="user-profile">
-                    <div className="user-info">
-                        <div style={{ fontWeight: '600', fontSize: '0.875rem', textTransform: 'capitalize' }}>
-                            Dr. {user?.name?.toLowerCase() || 'Guest'}
+                <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                    <div className="user-info" style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: '600', fontSize: '0.875rem' }}>
+                            {user?.name || 'Doctor'}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clinical Specialist</div>
                     </div>
-                    <div className="user-avatar">
-                        <User size={20} />
-                    </div>
+                    <UserButton afterSignOutUrl="/login" />
                 </div>
             </div>
         </header>

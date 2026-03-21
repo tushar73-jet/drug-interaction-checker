@@ -1,30 +1,33 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
+import { useUser, useClerk } from '@clerk/react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('doctor_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const { user, isLoaded, isSignedIn } = useUser();
+  const { signOut } = useClerk();
 
-  useEffect(() => {
-    // Sync with localStorage if needed, but the lazy initializer handles the reload case
-  }, []);
-
-  const login = (name) => {
-    const newUser = { name };
-    setUser(newUser);
-    localStorage.setItem('doctor_user', JSON.stringify(newUser));
+  const logout = async () => {
+    await signOut();
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('doctor_user');
+  const login = () => {
+    console.warn("Manual login called. Clerk handles authentication via SignIn component.");
   };
+
+  const formattedUser = user ? {
+    ...user,
+    name: user.fullName || user.firstName || user.username || 'Doctor'
+  } : null;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user: formattedUser, 
+      login, 
+      logout,
+      isLoaded,
+      isSignedIn
+    }}>
       {children}
     </AuthContext.Provider>
   );
