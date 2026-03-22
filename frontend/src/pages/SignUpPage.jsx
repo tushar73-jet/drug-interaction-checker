@@ -1,8 +1,8 @@
 import React from 'react';
-import { SignIn } from '@clerk/react';
+import { SignUp } from '@clerk/react';
 import { ShieldAlert } from 'lucide-react';
 
-const LoginPage = () => {
+const SignUpPage = () => {
     return (
         <div style={{
             minHeight: '100vh',
@@ -29,23 +29,23 @@ const LoginPage = () => {
                 }}>
                     <ShieldAlert size={32} />
                 </div>
-                <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0 }}>MedCheck</h1>
-                <p style={{ opacity: 0.8, fontWeight: '600', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Drug Interaction Analyzer</p>
+                <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0 }}>Create Account</h1>
+                <p style={{ opacity: 0.8, fontWeight: '600', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MedCheck Clinician Portal</p>
             </div>
 
-            <SignIn 
+            <SignUp 
                 appearance={{
                     elements: {
                         formButtonPrimary: 'bg-primary hover:bg-primary-dark',
                         card: 'shadow-2xl border-none'
                     }
                 }}
-                signUpUrl="/signup"
+                signInUrl="/login"
                 routing="path"
-                path="/login"
+                path="/signup"
             />
         </div>
     );
 };
 
-export default LoginPage;
+export default SignUpPage;
