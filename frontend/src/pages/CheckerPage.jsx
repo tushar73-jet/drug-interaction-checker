@@ -20,9 +20,34 @@ function CheckerPage() {
     const searchCache = useRef({})
 
     const [severityFilter, setSeverityFilter] = useState('All');
-    const [savedProfiles, setSavedProfiles] = useState(() => {
-        return JSON.parse(localStorage.getItem('saved_patient_profiles') || '[]');
-    });
+    const [clinicianNotes, setClinicianNotes] = useState('');
+    const [isMockData, setIsMockData] = useState(false);
+    const [savedProfiles, setSavedProfiles] = useState([]);
+
+    // Fetch remote profiles on login
+    useEffect(() => {
+        if (isSignedIn && user?.id) {
+            const fetchRemoteProfiles = async () => {
+                try {
+                    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                    const response = await fetch(`${API_BASE_URL}/api/profiles`, {
+                        headers: { 'x-user-id': user.id }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setSavedProfiles(data.profiles);
+                    }
+                } catch (error) {
+                    console.error("Failed to load remote profiles:", error);
+                    // Fallback to local
+                    setSavedProfiles(JSON.parse(localStorage.getItem('saved_patient_profiles') || '[]'));
+                }
+            };
+            fetchRemoteProfiles();
+        } else {
+            setSavedProfiles(JSON.parse(localStorage.getItem('saved_patient_profiles') || '[]'));
+        }
+    }, [isSignedIn, user?.id]);
 
     useEffect(() => {
         if (location.state?.prefillDrugs && selectedDrugs.length === 0) {
@@ -97,8 +122,10 @@ function CheckerPage() {
         if (!selectedDrugs.find(d => d.name === drug.name)) {
             setSelectedDrugs([...selectedDrugs, drug])
         }
+        // Don't clear query immediately if they want to add multiple? 
+        // Actually, clearing query but KEEPING suggestions if they want (though empty query = empty suggestions)
+        // Let's just keep the focus.
         setQuery('')
-        setSuggestions([])
         setInteractions(null)
     }
 
@@ -106,6 +133,18 @@ function CheckerPage() {
         setSelectedDrugs(selectedDrugs.filter(d => d.name !== name))
         setInteractions(null)
     }
+
+    // Real-time interaction monitoring
+    useEffect(() => {
+        if (selectedDrugs.length >= 2) {
+            const debounceTimer = setTimeout(() => {
+                checkInteractions();
+            }, 600); // 600ms debounce for auto-check
+            return () => clearTimeout(debounceTimer);
+        } else {
+            setInteractions(null);
+        }
+    }, [selectedDrugs]);
 
     const saveToHistory = (drugs, count) => {
         const historyItem = {
@@ -120,12 +159,44 @@ function CheckerPage() {
         localStorage.setItem('interaction_history', JSON.stringify(newHistory));
     };
 
-    const saveProfile = () => {
+    const saveProfile = async () => {
         if (!patientName.trim() || selectedDrugs.length === 0) return;
+        
+        const drugNames = selectedDrugs.map(d => d.name);
+        
+        if (isSignedIn && user?.id) {
+            try {
+                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${API_BASE_URL}/api/profiles`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-user-id': user.id 
+                    },
+                    body: JSON.stringify({ 
+                        name: patientName.trim(), 
+                        drugs: drugNames,
+                        notes: clinicianNotes 
+                    })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setSavedProfiles(prev => {
+                        const otherItems = prev.filter(p => p.name !== data.profile.name);
+                        return [data.profile, ...otherItems];
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.error("Failed to save remote profile:", err);
+            }
+        }
+
+        // Fallback or guest mode
         const newProfile = {
-            id: Date.now(),
+            id: Date.now().toString(),
             name: patientName.trim(),
-            drugs: selectedDrugs.map(d => d.name),
+            drugs: drugNames,
             date: new Date().toISOString()
         };
         const updated = [...savedProfiles, newProfile];
@@ -136,10 +207,27 @@ function CheckerPage() {
     const loadProfile = (profile) => {
         setPatientName(profile.name);
         setSelectedDrugs(profile.drugs.map(d => ({ name: d })));
+        setClinicianNotes(profile.notes || '');
         setInteractions(null);
     };
 
-    const deleteProfile = (id) => {
+    const deleteProfile = async (id) => {
+        if (isSignedIn && user?.id) {
+            try {
+                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${API_BASE_URL}/api/profiles/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'x-user-id': user.id }
+                });
+                if (response.ok) {
+                    setSavedProfiles(prev => prev.filter(p => p.id !== id));
+                    return;
+                }
+            } catch (err) {
+                console.error("Failed to delete remote profile:", err);
+            }
+        }
+
         const updated = savedProfiles.filter(p => p.id !== id);
         setSavedProfiles(updated);
         localStorage.setItem('saved_patient_profiles', JSON.stringify(updated));
@@ -150,10 +238,11 @@ function CheckerPage() {
         setLoading(true)
         try {
             let foundInteractions = [];
+            let response = null;
             try {
                 const drugNames = selectedDrugs.map(d => d.name)
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/interactions/check`, {
+                response = await fetch(`${API_BASE_URL}/api/interactions/check`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ drugs: drugNames })
@@ -166,6 +255,7 @@ function CheckerPage() {
                 }
             } catch (fallbackError) {
                 console.log('Using local fallback for interactions');
+                setIsMockData(true);
                 // Basic mock logic for offline demo
                 if (selectedDrugs.find(d => d.name === 'Aspirin') && selectedDrugs.find(d => d.name === 'Warfarin')) {
                     foundInteractions.push({
@@ -181,6 +271,8 @@ function CheckerPage() {
             }
 
             setInteractions(foundInteractions)
+            if (!foundInteractions.length && !loading) setIsMockData(false); // Reset if real check succeeded but no results
+            if (response?.ok) setIsMockData(false); // If we reached here without error, it's real
             // Ensure we use the latest array length to save history, rather than state which might not be updated
             saveToHistory(selectedDrugs, foundInteractions.length);
         } catch (error) {
@@ -230,6 +322,15 @@ function CheckerPage() {
         const drugNames = selectedDrugs.map(d => d.name).join(', ')
         doc.text(drugNames, 100, 74, { maxWidth: 90 })
 
+        // Clinician Notes Section
+        if (clinicianNotes.trim()) {
+            doc.setFont('helvetica', 'bold')
+            doc.text('CLINICIAN OBSERVATIONS', 14, 82)
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(9)
+            doc.text(clinicianNotes, 14, 87, { maxWidth: 180 })
+        }
+
         // Interactions Table
         const tableColumn = ["Drug Pair", "Severity", "Clinical Risk Description"];
         const tableRows = [];
@@ -249,7 +350,7 @@ function CheckerPage() {
         }
 
         autoTable(doc, {
-            startY: 85,
+            startY: clinicianNotes.trim() ? 100 : 85,
             head: [tableColumn],
             body: tableRows,
             theme: 'grid',
@@ -316,24 +417,29 @@ function CheckerPage() {
                             overflowY: 'auto',
                             padding: '0.5rem'
                         }}>
-                            {suggestions.map((drug, index) => (
-                                <div
-                                    key={index}
-                                    onClick={() => addDrug(drug)}
-                                    style={{
-                                        padding: '0.75rem 1rem',
-                                        borderRadius: '0.5rem',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}
-                                    className="suggestion-item"
-                                >
-                                    <span style={{ fontWeight: '600' }}>{drug.name}</span>
-                                    <Plus size={16} className="text-muted" />
-                                </div>
-                            ))}
+                                {suggestions.map((drug, index) => {
+                                    const isSelected = selectedDrugs.some(d => d.name === drug.name);
+                                    return (
+                                        <div
+                                            key={index}
+                                            onClick={() => !isSelected && addDrug(drug)}
+                                            style={{
+                                                padding: '0.75rem 1rem',
+                                                borderRadius: '0.5rem',
+                                                cursor: isSelected ? 'default' : 'pointer',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                opacity: isSelected ? 0.6 : 1,
+                                                background: isSelected ? 'var(--primary-light)' : 'transparent'
+                                            }}
+                                            className="suggestion-item"
+                                        >
+                                            <span style={{ fontWeight: '600' }}>{drug.name} {isSelected && '(Selected)'}</span>
+                                            {isSelected ? <ShieldAlert size={16} className="text-primary" /> : <Plus size={16} className="text-muted" />}
+                                        </div>
+                                    );
+                                })}
                         </div>
                     )}
                 </div>
@@ -446,6 +552,29 @@ function CheckerPage() {
                             )}
                         </div>
 
+                        {selectedDrugs.length > 0 && (
+                            <div style={{ marginTop: '1.5rem' }}>
+                                <label style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', display: 'block' }}>Clinician Notes</label>
+                                <textarea
+                                    placeholder="Add clinical observations or patient-specific warnings..."
+                                    value={clinicianNotes}
+                                    onChange={(e) => setClinicianNotes(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        height: '100px',
+                                        padding: '0.75rem',
+                                        borderRadius: '0.5rem',
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--input-bg)',
+                                        color: 'var(--text-main)',
+                                        fontSize: '0.875rem',
+                                        resize: 'none',
+                                        outline: 'none'
+                                    }}
+                                />
+                            </div>
+                        )}
+
                         <button
                             className="btn btn-primary"
                             onClick={checkInteractions}
@@ -473,7 +602,14 @@ function CheckerPage() {
             {interactions !== null && (
                 <div style={{ marginTop: '2.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <h3 className="section-title" style={{ marginBottom: 0 }}>Clinical Findings</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <h3 className="section-title" style={{ marginBottom: 0 }}>Clinical Findings</h3>
+                            {isMockData && (
+                                <span className="badge badge-minor" style={{ background: '#fef3c7', color: '#92400e', textTransform: 'none', gap: '0.4rem' }}>
+                                    <ShieldAlert size={14} /> Demo Mode (Offline Data)
+                                </span>
+                            )}
+                        </div>
 
                         {interactions.length > 0 && (
                             <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--card-bg)', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>

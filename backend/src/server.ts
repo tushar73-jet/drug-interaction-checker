@@ -3,6 +3,7 @@ import cors from 'cors';
 
 import drugRoutes from './routes/drugs';
 import interactionRoutes from './routes/interactions';
+import profileRoutes from './routes/profiles';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -16,6 +17,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 app.use('/api/drugs', drugRoutes);
 app.use('/api/interactions', interactionRoutes);
+app.use('/api/profiles', profileRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

@@ -1,16 +1,42 @@
-# React + Vite
+# Drug Interaction Checker - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend for the Drug Interaction Checker application, built with React and Vite.
 
-Currently, two official plugins are available:
+## 🚀 Features
+- **Modern UI**: Clean, responsive interface with Dark Mode support.
+- **Interactive Graphs**: Visual representation of drug interactions using `@xyflow/react`.
+- **Authentication**: Secure login and user management via Clerk.
+- **PDF Export**: Generate professional reports of interaction findings.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🛠️ Tech Stack
+- **Framework**: React 19
+- **Build Tool**: Vite
+- **Styling**: Vanilla CSS with a customized design system.
+- **State Management**: React Hooks.
 
-## React Compiler
+## 📦 Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Expanding the ESLint configuration
+2. Configure environment variables:
+   Create a `.env` file and add your Clerk publishable key:
+   ```env
+   VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+## 🏗️ Building for Production
+```bash
+npm run build
+```
+The build assets will be generated in the `dist/` directory.
+
+---
+For full project documentation, please refer to the [root README](../README.md).
