@@ -24,7 +24,7 @@ router.get('/search', async (req: Request, res: Response) => {
 
 router.get('/details/:name', async (req: Request, res: Response) => {
     try {
-        const name = req.params.name;
+        const name = req.params.name as string;
         const { getDrugDetails } = await import('../services/drugService');
         const details = await getDrugDetails(name);
         res.json({ details });
