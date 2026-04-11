@@ -60,3 +60,39 @@ export const getStats = async () => {
         totalInteractions,
     };
 };
+
+export const getDrugDetails = async (name: string) => {
+    const mockDetails: Record<string, any> = {
+        'Aspirin': {
+            class: 'NSAID / Antiplatelet',
+            indications: ['Pain management', 'Fever reduction', 'Ischemic stroke prophylaxis'],
+            action: 'Irreversibly inhibits COX-1 and COX-2',
+            warnings: ['Gastric ulceration', 'Gastrointestinal bleeding', 'Reye syndrome in children']
+        },
+        'Warfarin': {
+            class: 'Anticoagulant (Vitamin K Antagonist)',
+            indications: ['DVT prophylaxis', 'PE management', 'Atrial fibrillation'],
+            action: 'Inhibits Vitamin K epoxide reductase',
+            warnings: ['Life-threatening hemorrhage', 'Teratogenicity', 'Frequent INR monitoring required']
+        },
+        'Lisinopril': {
+            class: 'ACE Inhibitor',
+            indications: ['Hypertension', 'Heart failure', 'Post-MI management'],
+            action: 'Prevents conversion of Angio I to Angio II',
+            warnings: ['Hyperkalemia', 'Angioedema', 'Renal function monitoring']
+        },
+        'Metformin': {
+            class: 'Biguanide (Antidiabetic)',
+            indications: ['Type 2 Diabetes Mellitus', 'PCOS'],
+            action: 'Decreases hepatic glucose production & improves insulin sensitivity',
+            warnings: ['Lactic acidosis risk (rare)', 'Vitamin B12 deficiency', 'Renal contraindications']
+        }
+    };
+
+    return mockDetails[name] || {
+        class: 'Information not localized',
+        indications: ['Standard therapeutic use'],
+        action: 'Standard physiological mechanism',
+        warnings: ['Standard clinical precautions']
+    };
+};

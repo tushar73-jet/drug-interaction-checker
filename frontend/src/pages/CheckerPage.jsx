@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Search, Plus, X, AlertTriangle, FileText, ChevronRight, Activity, ShieldAlert, Save, User as UserIcon } from 'lucide-react'
+import { Search, Plus, X, AlertTriangle, FileText, ChevronRight, Activity, ShieldAlert, Save, User as UserIcon, Info } from 'lucide-react'
 import GraphView from '../GraphView'
+import DrugDetailsPanel from '../components/DrugDetailsPanel'
 import { useAuth } from '../components/AuthContext'
 import '../App.css'
 
 function CheckerPage() {
-    const { user } = useAuth();
+    const { user, isSignedIn } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
     const [query, setQuery] = useState('')
@@ -23,6 +24,10 @@ function CheckerPage() {
     const [clinicianNotes, setClinicianNotes] = useState('');
     const [isMockData, setIsMockData] = useState(false);
     const [savedProfiles, setSavedProfiles] = useState([]);
+    
+    // Phase 2: Interactive features
+    const [selectedDrugForInfo, setSelectedDrugForInfo] = useState(null);
+    const [highlightedInteractionIndex, setHighlightedInteractionIndex] = useState(null);
 
     // Fetch remote profiles on login
     useEffect(() => {
@@ -454,7 +459,18 @@ function CheckerPage() {
 
                     <div style={{ flex: 1, background: '#f8fafc', borderRadius: '0.5rem', overflow: 'hidden' }}>
                         {selectedDrugs.length >= 2 ? (
-                            <GraphView drugs={selectedDrugs} interactions={interactions} />
+                            <GraphView 
+                                drugs={selectedDrugs} 
+                                interactions={interactions} 
+                                onDrugClick={(name) => setSelectedDrugForInfo(name)}
+                                onInteractionClick={(edge) => {
+                                    // Edge ID format: `e-${interaction.drug1}-${interaction.drug2}-${index}`
+                                    const index = parseInt(edge.id.split('-').pop());
+                                    setHighlightedInteractionIndex(index);
+                                    // Scroll to findings
+                                    document.getElementById('clinical-findings')?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                            />
                         ) : (
                             <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', color: 'var(--text-muted)' }}>
                                 <Activity size={48} style={{ opacity: 0.1 }} />
@@ -600,7 +616,7 @@ function CheckerPage() {
             </div>
 
             {interactions !== null && (
-                <div style={{ marginTop: '2.5rem' }}>
+                <div style={{ marginTop: '2.5rem' }} id="clinical-findings">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <h3 className="section-title" style={{ marginBottom: 0 }}>Clinical Findings</h3>
@@ -643,10 +659,27 @@ function CheckerPage() {
                                     const severity = interaction.severity || 'Moderate';
                                     const severityClass = `badge-${severity.toLowerCase()}`;
                                     return (
-                                        <div key={index} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: `4px solid ${severity === 'Major' ? 'var(--danger)' : severity === 'Moderate' ? 'var(--warning)' : 'var(--success)'}` }}>
+                                        <div 
+                                            key={index} 
+                                            className="card" 
+                                            style={{ 
+                                                display: 'flex', 
+                                                flexDirection: 'column', 
+                                                gap: '1rem', 
+                                                borderTop: `4px solid ${severity === 'Major' ? 'var(--danger)' : severity === 'Moderate' ? 'var(--warning)' : 'var(--success)'}`,
+                                                boxShadow: highlightedInteractionIndex === index ? '0 0 0 2px var(--primary)' : 'var(--shadow-sm)',
+                                                transform: highlightedInteractionIndex === index ? 'scale(1.02)' : 'none',
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <span className={`badge ${severityClass}`}>{severity}</span>
-                                                <AlertTriangle size={18} color={severity === 'Major' ? 'var(--danger)' : 'var(--warning)'} />
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button onClick={() => setSelectedDrugForInfo(interaction.drug1)} className="btn-ghost" style={{ padding: '0.2rem' }} title={`Info for ${interaction.drug1}`}>
+                                                        <Info size={16} />
+                                                    </button>
+                                                    <AlertTriangle size={18} color={severity === 'Major' ? 'var(--danger)' : 'var(--warning)'} />
+                                                </div>
                                             </div>
                                             <div style={{ fontWeight: '700', fontSize: '1.125rem' }}>
                                                 {interaction.drug1} & {interaction.drug2}
@@ -666,6 +699,13 @@ function CheckerPage() {
                         )}
                     </div>
                 </div>
+            )}
+
+            {selectedDrugForInfo && (
+                <DrugDetailsPanel 
+                    drugName={selectedDrugForInfo} 
+                    onClose={() => setSelectedDrugForInfo(null)} 
+                />
             )}
         </div>
     )

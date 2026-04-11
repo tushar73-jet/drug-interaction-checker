@@ -2,17 +2,15 @@
 
 A comprehensive web application designed to help healthcare professionals and patients identify potential drug-drug interactions. The application provides analytical tools, including severity ratings and interactive graph visualizations, to ensure medication safety.
 
-![Dashboard Preview](https://via.placeholder.com/800x400?text=Drug+Interaction+Checker+Dashboard)
-
 ## 🚀 Features
 
-- **Advanced Drug Search**: Quickly find medications from a comprehensive database.
-- **Interaction Analysis**: Check for potential conflicts between multiple drugs simultaneously.
-- **Severity Ratings**: Interactions are categorized by severity (Major, Moderate, Minor) with clinical descriptions.
-- **Interactive Graph View**: Visualize complex drug interaction networks using a dynamic node-based interface.
-- **PDF Report Generation**: Export interaction findings into a professionally formatted PDF report.
-- **Secure Authentication**: User accounts and data protection powered by Clerk.
-- **Responsive Design**: Fully optimized for both desktop and mobile devices with Dark Mode support.
+- **Advanced Drug Search**: Quickly find medications from a comprehensive database with real-time risk monitoring.
+- **Interaction Analysis**: Check for potential conflicts between multiple drugs simultaneously with instant visual feedback.
+- **Pharmacological Context**: Access drug classes, therapeutic indications, and mechanism of action directly from the workspace.
+- **Interactive Visualization**: A dynamic, node-based graph that maps relationships to clinical findings with bi-directional highlighting.
+- **Clinician Workspace**: Securely persist patient profiles and clinical observations across devices (powered by Clerk).
+- **Professional Reporting**: Generate detailed PDF reports including patient history, clinician notes, and severity ratings.
+- **Responsive Design**: Fully optimized for primary clinical devices (Desktop & Tablet) with high-contrast Dark Mode.
 
 ## 🛠️ Technology Stack
 

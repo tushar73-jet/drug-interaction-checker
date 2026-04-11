@@ -22,6 +22,18 @@ router.get('/search', async (req: Request, res: Response) => {
     }
 });
 
+router.get('/details/:name', async (req: Request, res: Response) => {
+    try {
+        const name = req.params.name;
+        const { getDrugDetails } = await import('../services/drugService');
+        const details = await getDrugDetails(name);
+        res.json({ details });
+    } catch (error) {
+        console.error("Error in drug details route:", error);
+        res.status(500).json({ error: "Details fetch failed" });
+    }
+});
+
 router.get('/stats', async (req: Request, res: Response) => {
     try {
         const stats = await getStats();

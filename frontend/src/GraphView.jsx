@@ -10,7 +10,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-const GraphView = ({ drugs, interactions }) => {
+const GraphView = ({ drugs, interactions, onDrugClick, onInteractionClick }) => {
     // Generate nodes from the selected drugs
     const initialNodes = useMemo(() => {
         return drugs.map((drug, index) => {
@@ -79,6 +79,8 @@ const GraphView = ({ drugs, interactions }) => {
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                onNodeClick={(event, node) => onDrugClick && onDrugClick(node.id)}
+                onEdgeClick={(event, edge) => onInteractionClick && onInteractionClick(edge)}
                 fitView
                 attributionPosition="bottom-left"
             >
