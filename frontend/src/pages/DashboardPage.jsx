@@ -89,45 +89,7 @@ const DashboardPage = () => {
                 ))}
             </div>
 
-            <div className="dashboard-grid">
-                <div className="card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.125rem' }}>System Integrity Status</h3>
-                        <button className="btn btn-ghost" style={{ fontSize: '0.75rem' }}>View Logs</button>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        {[
-                            { status: 'Operational', name: 'Interaction Engine v2.4', time: 'Last sync: 2h ago' },
-                            { status: 'Operational', name: 'RxNorm Database Provider', time: 'Last sync: 10m ago' },
-                            { status: 'Maintenance', name: 'Report Generation Service', time: 'Scheduled: Mar 5' },
-                        ].map((item, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: i < 2 ? '1.25rem' : '0', borderBottom: i < 2 ? '1px solid var(--border)' : 'none' }}>
-                                <div style={{
-                                    width: '10px',
-                                    height: '10px',
-                                    borderRadius: '50%',
-                                    background: item.status === 'Operational' ? 'var(--success)' : 'var(--warning)'
-                                }}></div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: '600', fontSize: '0.9375rem' }}>{item.name}</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.time}</div>
-                                </div>
-                                <div style={{ fontSize: '0.75rem', fontWeight: '600', color: item.status === 'Operational' ? 'var(--success)' : 'var(--warning)' }}>{item.status}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
 
-                <div className="card" style={{ background: 'var(--secondary)', color: 'white' }}>
-                    <h3 style={{ fontSize: '1.125rem', color: 'white', marginBottom: '1rem' }}>Clinical Tip</h3>
-                    <p style={{ fontSize: '0.875rem', opacity: 0.8, marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                        Always cross-reference checker results with patient's medical history for a complete assessment of risk factors like kidney/liver function.
-                    </p>
-                    <button className="btn" style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', width: '100%', fontSize: '0.875rem' }}>
-                        Open Guidelines <ArrowUpRight size={16} />
-                    </button>
-                </div>
-            </div>
         </div>
     );
 };

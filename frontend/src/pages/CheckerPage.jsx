@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Search, Plus, X, AlertTriangle, FileText, ChevronRight, Activity, ShieldAlert, Save, User as UserIcon, Info } from 'lucide-react'
+import { Search, Plus, X, AlertTriangle, FileText, Activity, ShieldAlert, Save, Info } from 'lucide-react'
 import GraphView from '../GraphView'
 import DrugDetailsPanel from '../components/DrugDetailsPanel'
 import { useAuth } from '../components/AuthContext'
@@ -23,6 +23,7 @@ function CheckerPage() {
     const [severityFilter, setSeverityFilter] = useState('All');
     const [clinicianNotes, setClinicianNotes] = useState('');
     const [isMockData, setIsMockData] = useState(false);
+    const [error, setError] = useState(null); // Bug #8: user-facing error state
     const [savedProfiles, setSavedProfiles] = useState([]);
     
     // Phase 2: Interactive features
@@ -41,6 +42,8 @@ function CheckerPage() {
                     if (response.ok) {
                         const data = await response.json();
                         setSavedProfiles(data.profiles);
+                        // Bug #6: mirror to localStorage so offline fallback stays fresh
+                        localStorage.setItem('saved_patient_profiles', JSON.stringify(data.profiles));
                     }
                 } catch (error) {
                     console.error("Failed to load remote profiles:", error);
@@ -239,28 +242,32 @@ function CheckerPage() {
     };
 
     const checkInteractions = async () => {
-        if (selectedDrugs.length < 2) return
-        setLoading(true)
+        if (selectedDrugs.length < 2) return;
+        setLoading(true);
+        setError(null); // Bug #8: clear previous error on each new check
         try {
             let foundInteractions = [];
-            let response = null;
+            // Bug #3: track fallback via a local boolean — checking `loading` here
+            // is unreliable because loading is still `true` inside the try block.
+            let usedFallback = false;
+
             try {
-                const drugNames = selectedDrugs.map(d => d.name)
+                const drugNames = selectedDrugs.map(d => d.name);
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                response = await fetch(`${API_BASE_URL}/api/interactions/check`, {
+                const response = await fetch(`${API_BASE_URL}/api/interactions/check`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ drugs: drugNames })
-                })
+                });
                 if (response.ok) {
-                    const data = await response.json()
+                    const data = await response.json();
                     foundInteractions = data.interactions || [];
                 } else {
-                    throw new Error('Backend failed');
+                    throw new Error(`Server error: ${response.status}`);
                 }
             } catch (fallbackError) {
-                console.log('Using local fallback for interactions');
-                setIsMockData(true);
+                console.warn('Backend unavailable, using offline demo data:', fallbackError);
+                usedFallback = true;
                 // Basic mock logic for offline demo
                 if (selectedDrugs.find(d => d.name === 'Aspirin') && selectedDrugs.find(d => d.name === 'Warfarin')) {
                     foundInteractions.push({
@@ -272,18 +279,22 @@ function CheckerPage() {
                         drug1: 'Ibuprofen', drug2: 'Lisinopril', severity: 'Moderate',
                         description: 'NSAIDs may diminish the antihypertensive effect of ACE inhibitors and increase the risk of renal impairment.'
                     });
+                } else {
+                    // Bug #8: inform the user when neither real data nor a mock match is available
+                    setError('Could not connect to the interaction database. Results may be incomplete.');
                 }
             }
 
-            setInteractions(foundInteractions)
-            if (!foundInteractions.length && !loading) setIsMockData(false); // Reset if real check succeeded but no results
-            if (response?.ok) setIsMockData(false); // If we reached here without error, it's real
-            // Ensure we use the latest array length to save history, rather than state which might not be updated
+            // Bug #3: setIsMockData based on the local flag, not on `loading` or `response` state
+            setIsMockData(usedFallback);
+            setInteractions(foundInteractions);
             saveToHistory(selectedDrugs, foundInteractions.length);
-        } catch (error) {
-            console.error('Error checking interactions:', error)
+        } catch (err) {
+            console.error('Unexpected error checking interactions:', err);
+            // Bug #8: surface unexpected errors to the user
+            setError('An unexpected error occurred. Please try again.');
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
 
@@ -386,6 +397,25 @@ function CheckerPage() {
 
     return (
         <div className="animate-fade-in">
+            {/* Bug #8: user-facing error banner */}
+            {error && (
+                <div style={{
+                    padding: '0.875rem 1.25rem',
+                    marginBottom: '1.5rem',
+                    borderRadius: '0.75rem',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#991b1b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    fontSize: '0.9375rem',
+                    fontWeight: '500'
+                }}>
+                    <AlertTriangle size={18} style={{ flexShrink: 0 }} />
+                    {error}
+                </div>
+            )}
             <div style={{ marginBottom: '2rem' }}>
                 <h2 className="section-title"><Activity size={24} className="text-primary" /> Interaction Checker</h2>
                 <p style={{ color: 'var(--text-muted)' }}>Search and select multiple drugs to assess potential clinical interactions.</p>
@@ -464,11 +494,15 @@ function CheckerPage() {
                                 interactions={interactions} 
                                 onDrugClick={(name) => setSelectedDrugForInfo(name)}
                                 onInteractionClick={(edge) => {
-                                    // Edge ID format: `e-${interaction.drug1}-${interaction.drug2}-${index}`
-                                    const index = parseInt(edge.id.split('-').pop());
-                                    setHighlightedInteractionIndex(index);
-                                    // Scroll to findings
-                                    document.getElementById('clinical-findings')?.scrollIntoView({ behavior: 'smooth' });
+                                    // Edge ID format: `e-${drug1}-${drug2}-${index}`
+                                    // Bug #9: drug names can contain hyphens so split('-').pop() is unreliable.
+                                    // Use the LAST segment which is always the numeric index appended at build time.
+                                    const parts = edge.id.split('-');
+                                    const index = parseInt(parts[parts.length - 1], 10);
+                                    if (!isNaN(index)) {
+                                        setHighlightedInteractionIndex(index);
+                                        document.getElementById('clinical-findings')?.scrollIntoView({ behavior: 'smooth' });
+                                    }
                                 }}
                             />
                         ) : (

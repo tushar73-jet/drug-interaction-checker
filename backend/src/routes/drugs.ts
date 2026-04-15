@@ -1,19 +1,30 @@
 import { Router, Request, Response } from 'express';
-import { searchDrugs, getStats } from '../services/drugService';
+import { searchDrugs, getStats, getDrugDetails } from '../services/drugService';
 
 const router = Router();
 
+/**
+ * Validates a search query string: 1–100 chars, letters/digits/spaces/hyphens/apostrophes only.
+ * Prevents XSS payloads from reaching the drug search logic.
+ */
+const QUERY_REGEX = /^[a-zA-Z0-9 '\-]{1,100}$/;
 
+const isValidQuery = (q: unknown): q is string =>
+    typeof q === 'string' && QUERY_REGEX.test(q.trim());
 
 router.get('/search', async (req: Request, res: Response) => {
     try {
-        const query = req.query.q as string;
+        const query = req.query.q;
 
         if (!query) {
             return res.json({ drugs: [] });
         }
 
-        const drugs = await searchDrugs(query);
+        if (!isValidQuery(query)) {
+            return res.status(400).json({ error: "Invalid search query. Use only letters, digits, spaces, hyphens, or apostrophes (max 100 chars)." });
+        }
+
+        const drugs = await searchDrugs(query as string);
         res.json({ drugs });
 
     } catch (error) {
@@ -24,8 +35,12 @@ router.get('/search', async (req: Request, res: Response) => {
 
 router.get('/details/:name', async (req: Request, res: Response) => {
     try {
-        const name = req.params.name as string;
-        const { getDrugDetails } = await import('../services/drugService');
+        const name = req.params.name;
+
+        if (!isValidQuery(name)) {
+            return res.status(400).json({ error: "Invalid drug name." });
+        }
+
         const details = await getDrugDetails(name);
         res.json({ details });
     } catch (error) {

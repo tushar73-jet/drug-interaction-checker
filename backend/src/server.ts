@@ -8,7 +8,24 @@ import profileRoutes from './routes/profiles';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// Restrict CORS to an explicit origin allow-list.
+// Set ALLOWED_ORIGINS as a comma-separated env var in production
+// (e.g. "https://your-app.vercel.app,https://your-custom-domain.com").
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',').map(o => o.trim());
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow server-to-server requests (no Origin header) and listed origins.
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS: origin '${origin}' is not permitted.`));
+        }
+    },
+    methods: ['GET', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'x-user-id'],
+}));
+
 app.use(express.json());
 
 app.get('/api/health', (req: Request, res: Response) => {

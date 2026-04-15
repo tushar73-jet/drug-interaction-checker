@@ -35,12 +35,4 @@ model PatientProfile {
   @@index([clerkId])
 }
 
-model SearchHistory {
-  id           String   @id @default(uuid())
-  clerkId      String
-  drugsChecked String   // Comma-separated or JSON list of drugs involved in the check
-  resultCount  Int
-  createdAt    DateTime @default(now())
 
-  @@index([clerkId])
-}
