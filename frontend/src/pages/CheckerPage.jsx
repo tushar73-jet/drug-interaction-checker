@@ -23,7 +23,7 @@ function CheckerPage() {
     const [severityFilter, setSeverityFilter] = useState('All');
     const [clinicianNotes, setClinicianNotes] = useState('');
     const [isMockData, setIsMockData] = useState(false);
-    const [error, setError] = useState(null); // Bug #8: user-facing error state
+    const [error, setError] = useState(null);
     const [savedProfiles, setSavedProfiles] = useState([]);
     
     // Phase 2: Interactive features
@@ -42,7 +42,7 @@ function CheckerPage() {
                     if (response.ok) {
                         const data = await response.json();
                         setSavedProfiles(data.profiles);
-                        // Bug #6: mirror to localStorage so offline fallback stays fresh
+                        // Keep localStorage in sync so the offline fallback always has fresh data.
                         localStorage.setItem('saved_patient_profiles', JSON.stringify(data.profiles));
                     }
                 } catch (error) {
@@ -244,11 +244,11 @@ function CheckerPage() {
     const checkInteractions = async () => {
         if (selectedDrugs.length < 2) return;
         setLoading(true);
-        setError(null); // Bug #8: clear previous error on each new check
+        setError(null);
         try {
             let foundInteractions = [];
-            // Bug #3: track fallback via a local boolean — checking `loading` here
-            // is unreliable because loading is still `true` inside the try block.
+            // Track fallback usage via a local boolean: `loading` is still true
+            // at this point in the call stack, so reading it here is unreliable.
             let usedFallback = false;
 
             try {
@@ -280,18 +280,16 @@ function CheckerPage() {
                         description: 'NSAIDs may diminish the antihypertensive effect of ACE inhibitors and increase the risk of renal impairment.'
                     });
                 } else {
-                    // Bug #8: inform the user when neither real data nor a mock match is available
                     setError('Could not connect to the interaction database. Results may be incomplete.');
                 }
             }
 
-            // Bug #3: setIsMockData based on the local flag, not on `loading` or `response` state
+            // Reflect offline mode in the UI after the inner try/catch resolves.
             setIsMockData(usedFallback);
             setInteractions(foundInteractions);
             saveToHistory(selectedDrugs, foundInteractions.length);
         } catch (err) {
             console.error('Unexpected error checking interactions:', err);
-            // Bug #8: surface unexpected errors to the user
             setError('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
@@ -397,7 +395,7 @@ function CheckerPage() {
 
     return (
         <div className="animate-fade-in">
-            {/* Bug #8: user-facing error banner */}
+
             {error && (
                 <div style={{
                     padding: '0.875rem 1.25rem',
@@ -494,9 +492,8 @@ function CheckerPage() {
                                 interactions={interactions} 
                                 onDrugClick={(name) => setSelectedDrugForInfo(name)}
                                 onInteractionClick={(edge) => {
-                                    // Edge ID format: `e-${drug1}-${drug2}-${index}`
-                                    // Bug #9: drug names can contain hyphens so split('-').pop() is unreliable.
-                                    // Use the LAST segment which is always the numeric index appended at build time.
+                                    // Edge IDs are formatted as `e-${drug1}-${drug2}-${index}`.
+                                    // Drug names may contain hyphens, so read the index from the last segment only.
                                     const parts = edge.id.split('-');
                                     const index = parseInt(parts[parts.length - 1], 10);
                                     if (!isNaN(index)) {
