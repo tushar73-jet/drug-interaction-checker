@@ -64,8 +64,9 @@ The backend will run on `http://localhost:3001`.
 cd ../frontend
 npm install
 
-# Create .env file
-echo "VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key" > .env
+# Create .env file (use the provided template)
+cp .env.example .env
+# Then fill in your Clerk publishable key
 
 # Run Development Server
 npm run dev
@@ -95,16 +96,29 @@ drug-interaction-checker/
 
 ## 🔐 Environment Variables
 
+> Both directories include a `.env.example` template. Copy it to `.env` and fill in your values.
+
 ### Frontend (`frontend/.env`)
-| Variable | Description |
-|----------|-------------|
-| `VITE_CLERK_PUBLISHABLE_KEY` | Your Clerk application publishable key |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_CLERK_PUBLISHABLE_KEY` | Yes | Your Clerk application publishable key |
+| `VITE_API_URL` | No | Backend API URL (default: `http://localhost:3001`) |
 
 ### Backend (`backend/.env`)
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Local server port (default: 3001) |
-| `DATABASE_URL` | Prisma database connection string (default: SQLite `file:./data/dev.db`) |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PORT` | No | Server port (default: `3001`) |
+| `DATABASE_URL` | No | Prisma database URL (default: `file:./data/dev.db`) |
+| `ALLOWED_ORIGINS` | No | Comma-separated CORS origins (default: `http://localhost:5173`) |
+
+## 🧪 Testing
+
+```bash
+cd backend
+npm test
+```
+
+Runs the unit test suite for the interaction checker service (bidirectionality, case normalisation, deduplication, result shape).
 
 ## 📄 License
 This project is licensed under the ISC License.

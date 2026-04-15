@@ -9,6 +9,10 @@ const adapter = new PrismaBetterSqlite3({ url: rawUrl })
 const prisma = new PrismaClient({ adapter })
 type CsvRow = Record<string, string>
 
+// Normalize to title-case so all stored names are consistent regardless of source formatting.
+const normalizeDrugName = (name: string): string =>
+    name.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
 async function main() {
   const results: any[] = []
 
@@ -16,7 +20,7 @@ async function main() {
     fs.createReadStream("data/db_drug_interactions.csv")
       .pipe(csv())
       .on("data", (data: CsvRow) => {
-        const description = data['Interaction Description'] || "";
+        const description = (data['Interaction Description'] || "").trim();
         let severity = "Moderate";
 
         const lowerDesc = description.toLowerCase();
@@ -27,8 +31,8 @@ async function main() {
         }
 
         results.push({
-          drug1: data['Drug 1'],
-          drug2: data['Drug 2'],
+          drug1: normalizeDrugName(data['Drug 1']),
+          drug2: normalizeDrugName(data['Drug 2']),
           description: description,
           severity: severity
         })

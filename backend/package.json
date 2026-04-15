@@ -8,7 +8,7 @@
     "build": "npx prisma generate && npx tsc",
     "dev": "ts-node src/server.ts",
     "seed": "ts-node src/seed.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --config jest.config.json"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,9 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.3.2"
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.3.2",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9"
   }
 }

@@ -7,24 +7,35 @@ const DrugDetailsPanel = ({ drugName, onClose }) => {
 
     useEffect(() => {
         if (!drugName) return;
-        
+
+        const controller = new AbortController();
+
         const fetchDetails = async () => {
             setLoading(true);
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/drugs/details/${drugName}`);
+                const response = await fetch(
+                    `${API_BASE_URL}/api/drugs/details/${drugName}`,
+                    { signal: controller.signal }
+                );
                 if (response.ok) {
                     const data = await response.json();
                     setDetails(data.details);
                 }
             } catch (error) {
-                console.error("Failed to fetch drug details:", error);
+                if (error.name !== 'AbortError') {
+                    console.error("Failed to fetch drug details:", error);
+                }
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchDetails();
+
+        return () => controller.abort();
     }, [drugName]);
 
     if (!drugName) return null;

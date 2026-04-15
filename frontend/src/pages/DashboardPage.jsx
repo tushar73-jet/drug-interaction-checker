@@ -13,6 +13,7 @@ const DashboardPage = () => {
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
                 const response = await fetch(`${API_BASE_URL}/api/drugs/stats`);
+                if (!response.ok) throw new Error(`Stats API error: ${response.status}`);
                 const backendStats = await response.json();
 
                 const savedHistory = JSON.parse(localStorage.getItem('interaction_history') || '[]');

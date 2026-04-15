@@ -33,11 +33,14 @@ function CheckerPage() {
     // Fetch remote profiles on login
     useEffect(() => {
         if (isSignedIn && user?.id) {
+            const controller = new AbortController();
+
             const fetchRemoteProfiles = async () => {
                 try {
                     const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
                     const response = await fetch(`${API_BASE_URL}/api/profiles`, {
-                        headers: { 'x-user-id': user.id }
+                        headers: { 'x-user-id': user.id },
+                        signal: controller.signal
                     });
                     if (response.ok) {
                         const data = await response.json();
@@ -46,12 +49,16 @@ function CheckerPage() {
                         localStorage.setItem('saved_patient_profiles', JSON.stringify(data.profiles));
                     }
                 } catch (error) {
-                    console.error("Failed to load remote profiles:", error);
-                    // Fallback to local
-                    setSavedProfiles(JSON.parse(localStorage.getItem('saved_patient_profiles') || '[]'));
+                    if (error.name !== 'AbortError') {
+                        console.error("Failed to load remote profiles:", error);
+                        setSavedProfiles(JSON.parse(localStorage.getItem('saved_patient_profiles') || '[]'));
+                    }
                 }
             };
+
             fetchRemoteProfiles();
+
+            return () => controller.abort();
         } else {
             setSavedProfiles(JSON.parse(localStorage.getItem('saved_patient_profiles') || '[]'));
         }
@@ -64,25 +71,19 @@ function CheckerPage() {
             if (location.state.patientName) {
                 setPatientName(location.state.patientName);
             }
-
-            // Trigger check if we have enough drugs after state update
-            if (drugsToPrefill.length >= 2) {
-                // Use a short timeout to ensure state has settled, or better:
-                // rely on an effect that checks for the prefill flag
-            }
-
-            // Clear location state immediately
+            // Clear location state so navigating back here doesn't re-prefill
             navigate(location.pathname, { replace: true, state: {} });
         }
-    }, [location.state, navigate, selectedDrugs.length]); // Added selectedDrugs.length to dependencies
+    }, [location.state, navigate, selectedDrugs.length]);
 
-    // Auto-trigger check ONLY when prefilled from history/global search
+    // When drugs arrive via history/global-search navigation, run the check automatically.
+    // This effect intentionally omits checkInteractions from its deps to avoid re-running
+    // on every render — it should only fire when the prefill source changes.
     useEffect(() => {
-        // Use a ref to track if we already auto-checked for this specific location state
         if (selectedDrugs.length >= 2 && !interactions && location.state?.prefillDrugs) {
             checkInteractions();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state?.prefillDrugs]);
 
     useEffect(() => {
@@ -98,7 +99,7 @@ function CheckerPage() {
             let foundDrugs = [];
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/drugs/search?q=${query}`)
+                const response = await fetch(`${API_BASE_URL}/api/drugs/search?q=${encodeURIComponent(query)}`)
                 if (response.ok) {
                     const data = await response.json()
                     foundDrugs = data.drugs || []
@@ -130,9 +131,6 @@ function CheckerPage() {
         if (!selectedDrugs.find(d => d.name === drug.name)) {
             setSelectedDrugs([...selectedDrugs, drug])
         }
-        // Don't clear query immediately if they want to add multiple? 
-        // Actually, clearing query but KEEPING suggestions if they want (though empty query = empty suggestions)
-        // Let's just keep the focus.
         setQuery('')
         setInteractions(null)
     }
@@ -245,6 +243,10 @@ function CheckerPage() {
         if (selectedDrugs.length < 2) return;
         setLoading(true);
         setError(null);
+
+        // Cancel any in-flight request if the user adds/removes drugs before it resolves.
+        const controller = new AbortController();
+
         try {
             let foundInteractions = [];
             // Track fallback usage via a local boolean: `loading` is still true
@@ -257,7 +259,8 @@ function CheckerPage() {
                 const response = await fetch(`${API_BASE_URL}/api/interactions/check`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ drugs: drugNames })
+                    body: JSON.stringify({ drugs: drugNames }),
+                    signal: controller.signal
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -266,6 +269,7 @@ function CheckerPage() {
                     throw new Error(`Server error: ${response.status}`);
                 }
             } catch (fallbackError) {
+                if (fallbackError.name === 'AbortError') return;
                 console.warn('Backend unavailable, using offline demo data:', fallbackError);
                 usedFallback = true;
                 // Basic mock logic for offline demo
@@ -289,8 +293,10 @@ function CheckerPage() {
             setInteractions(foundInteractions);
             saveToHistory(selectedDrugs, foundInteractions.length);
         } catch (err) {
-            console.error('Unexpected error checking interactions:', err);
-            setError('An unexpected error occurred. Please try again.');
+            if (err.name !== 'AbortError') {
+                console.error('Unexpected error checking interactions:', err);
+                setError('An unexpected error occurred. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
