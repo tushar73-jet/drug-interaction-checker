@@ -1,11 +1,12 @@
 import React, { createContext, useContext } from 'react';
-import { useUser, useClerk } from '@clerk/react';
+import { useUser, useClerk, useAuth as useClerkAuth } from '@clerk/react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const { user, isLoaded, isSignedIn } = useUser();
   const { signOut } = useClerk();
+  const { getToken } = useClerkAuth();
 
   const logout = async () => {
     await signOut();
@@ -26,7 +27,8 @@ export const AuthProvider = ({ children }) => {
       login, 
       logout,
       isLoaded,
-      isSignedIn
+      isSignedIn,
+      getToken
     }}>
       {children}
     </AuthContext.Provider>

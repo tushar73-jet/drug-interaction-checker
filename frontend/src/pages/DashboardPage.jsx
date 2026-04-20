@@ -11,7 +11,7 @@ const DashboardPage = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
                 const response = await fetch(`${API_BASE_URL}/api/v1/drugs/stats`);
                 if (!response.ok) throw new Error(`Stats API error: ${response.status}`);
                 const backendStats = await response.json();
@@ -61,7 +61,7 @@ const DashboardPage = () => {
 
             <div className="stats-grid">
                 {stats.map((stat, index) => (
-                    <div key={index} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div key={index} className="surface-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{
                                 padding: '0.75rem',

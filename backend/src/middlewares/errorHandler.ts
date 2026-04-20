@@ -26,6 +26,20 @@ export const errorHandler = (
   }
 
   // Log unexpected errors for developers
+  if (err.message && (err.message.includes('Unauthenticated') || err.message.includes('Publishable key'))) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Authentication session has expired or is invalid.',
+    });
+  }
+
+  if (err.message === 'Unauthorized') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'You do not have permission to access this resource.',
+    });
+  }
+
   console.error('INTERNAL_ERROR:', err);
 
   return res.status(500).json({

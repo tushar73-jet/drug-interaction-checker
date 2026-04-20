@@ -16,7 +16,11 @@ const Header = ({ onMenuClick }) => {
     const searchCache = useRef({});
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
         localStorage.setItem('theme', theme);
     }, [theme]);
 
@@ -35,7 +39,7 @@ const Header = ({ onMenuClick }) => {
                 return;
             }
             try {
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
                 const response = await fetch(`${API_BASE_URL}/api/v1/drugs/search?q=${query}`);
                 if (response.ok) {
                     const data = await response.json();

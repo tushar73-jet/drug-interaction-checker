@@ -9,7 +9,7 @@ import { useAuth } from '../components/AuthContext'
 import '../App.css'
 
 function CheckerPage() {
-    const { user, isSignedIn } = useAuth();
+    const { user, isSignedIn, getToken } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
     const [query, setQuery] = useState('')
@@ -25,7 +25,7 @@ function CheckerPage() {
     const [isMockData, setIsMockData] = useState(false);
     const [error, setError] = useState(null);
     const [savedProfiles, setSavedProfiles] = useState([]);
-    
+
     // Phase 2: Interactive features
     const [selectedDrugForInfo, setSelectedDrugForInfo] = useState(null);
     const [highlightedInteractionIndex, setHighlightedInteractionIndex] = useState(null);
@@ -37,9 +37,12 @@ function CheckerPage() {
 
             const fetchRemoteProfiles = async () => {
                 try {
-                    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+                    const token = await getToken();
                     const response = await fetch(`${API_BASE_URL}/api/v1/profiles`, {
-                        headers: { 'x-user-id': user.id },
+                        headers: { 
+                            'Authorization': `Bearer ${token}`
+                        },
                         signal: controller.signal
                     });
                     if (response.ok) {
@@ -83,7 +86,7 @@ function CheckerPage() {
         if (selectedDrugs.length >= 2 && !interactions && location.state?.prefillDrugs) {
             checkInteractions();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state?.prefillDrugs]);
 
     useEffect(() => {
@@ -98,7 +101,7 @@ function CheckerPage() {
             }
             let foundDrugs = [];
             try {
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
                 const response = await fetch(`${API_BASE_URL}/api/v1/drugs/search?q=${encodeURIComponent(query)}`)
                 if (response.ok) {
                     const data = await response.json()
@@ -167,22 +170,23 @@ function CheckerPage() {
 
     const saveProfile = async () => {
         if (!patientName.trim() || selectedDrugs.length === 0) return;
-        
+
         const drugNames = selectedDrugs.map(d => d.name);
-        
+
         if (isSignedIn && user?.id) {
             try {
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+                const token = await getToken();
                 const response = await fetch(`${API_BASE_URL}/api/v1/profiles`, {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
-                        'x-user-id': user.id 
+                        'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ 
-                        name: patientName.trim(), 
+                    body: JSON.stringify({
+                        name: patientName.trim(),
                         drugs: drugNames,
-                        notes: clinicianNotes 
+                        notes: clinicianNotes
                     })
                 });
                 if (response.ok) {
@@ -220,10 +224,13 @@ function CheckerPage() {
     const deleteProfile = async (id) => {
         if (isSignedIn && user?.id) {
             try {
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+                const token = await getToken();
                 const response = await fetch(`${API_BASE_URL}/api/v1/profiles/${id}`, {
                     method: 'DELETE',
-                    headers: { 'x-user-id': user.id }
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
                 if (response.ok) {
                     setSavedProfiles(prev => prev.filter(p => p.id !== id));
@@ -255,7 +262,7 @@ function CheckerPage() {
 
             try {
                 const drugNames = selectedDrugs.map(d => d.name);
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
                 const response = await fetch(`${API_BASE_URL}/api/v1/interactions/check`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -425,7 +432,7 @@ function CheckerPage() {
                 <p style={{ color: 'var(--text-muted)' }}>Search and select multiple drugs to assess potential clinical interactions.</p>
             </div>
 
-            <div className="card" style={{ marginBottom: '2rem' }}>
+            <div className="surface-card" style={{ marginBottom: '2rem' }}>
                 <div className="search-input-wrapper" style={{ position: 'relative' }}>
                     <div style={{ position: 'absolute', left: '1rem', top: '1.125rem', color: 'var(--text-muted)' }}>
                         <Search size={20} />
@@ -456,36 +463,36 @@ function CheckerPage() {
                             overflowY: 'auto',
                             padding: '0.5rem'
                         }}>
-                                {suggestions.map((drug, index) => {
-                                    const isSelected = selectedDrugs.some(d => d.name === drug.name);
-                                    return (
-                                        <div
-                                            key={index}
-                                            onClick={() => !isSelected && addDrug(drug)}
-                                            style={{
-                                                padding: '0.75rem 1rem',
-                                                borderRadius: '0.5rem',
-                                                cursor: isSelected ? 'default' : 'pointer',
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                opacity: isSelected ? 0.6 : 1,
-                                                background: isSelected ? 'var(--primary-light)' : 'transparent'
-                                            }}
-                                            className="suggestion-item"
-                                        >
-                                            <span style={{ fontWeight: '600' }}>{drug.name} {isSelected && '(Selected)'}</span>
-                                            {isSelected ? <ShieldAlert size={16} className="text-primary" /> : <Plus size={16} className="text-muted" />}
-                                        </div>
-                                    );
-                                })}
+                            {suggestions.map((drug, index) => {
+                                const isSelected = selectedDrugs.some(d => d.name === drug.name);
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={() => !isSelected && addDrug(drug)}
+                                        style={{
+                                            padding: '0.75rem 1rem',
+                                            borderRadius: '0.5rem',
+                                            cursor: isSelected ? 'default' : 'pointer',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            opacity: isSelected ? 0.6 : 1,
+                                            background: isSelected ? 'var(--primary-light)' : 'transparent'
+                                        }}
+                                        className="suggestion-item"
+                                    >
+                                        <span style={{ fontWeight: '600' }}>{drug.name} {isSelected && '(Selected)'}</span>
+                                        {isSelected ? <ShieldAlert size={16} className="text-primary" /> : <Plus size={16} className="text-muted" />}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
             </div>
 
             <div className="checker-layout-grid">
-                <div className="card" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
+                <div className="surface-card" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.125rem' }}>Visual Interaction Map</h3>
                         {interactions && <span className="badge badge-minor">{interactions.length} Links</span>}
@@ -493,9 +500,9 @@ function CheckerPage() {
 
                     <div style={{ flex: 1, background: '#f8fafc', borderRadius: '0.5rem', overflow: 'hidden' }}>
                         {selectedDrugs.length >= 2 ? (
-                            <GraphView 
-                                drugs={selectedDrugs} 
-                                interactions={interactions} 
+                            <GraphView
+                                drugs={selectedDrugs}
+                                interactions={interactions}
                                 onDrugClick={(name) => setSelectedDrugForInfo(name)}
                                 onInteractionClick={(edge) => {
                                     // Edge IDs are formatted as `e-${drug1}-${drug2}-${index}`.
@@ -518,7 +525,7 @@ function CheckerPage() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div className="card">
+                    <div className="surface-card">
                         <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Patient Profile</h3>
 
                         <div style={{ marginBottom: '1.5rem' }}>
@@ -639,7 +646,7 @@ function CheckerPage() {
                     </div>
 
                     {interactions && (
-                        <div className="card animate-fade-in" style={{ borderLeft: '4px solid var(--success)' }}>
+                        <div className="surface-card animate-fade-in" style={{ borderLeft: '10px solid hsl(var(--success))', padding: '1.5rem' }}>
                             <button
                                 onClick={exportToPDF}
                                 className="btn btn-primary"
@@ -698,19 +705,19 @@ function CheckerPage() {
                                     return (
                                         <div 
                                             key={index} 
-                                            className="card" 
+                                            className="surface-card" 
                                             style={{ 
                                                 display: 'flex', 
                                                 flexDirection: 'column', 
                                                 gap: '1rem', 
-                                                borderTop: `4px solid ${severity === 'Major' ? 'var(--danger)' : severity === 'Moderate' ? 'var(--warning)' : 'var(--success)'}`,
-                                                boxShadow: highlightedInteractionIndex === index ? '0 0 0 2px var(--primary)' : 'var(--shadow-sm)',
-                                                transform: highlightedInteractionIndex === index ? 'scale(1.02)' : 'none',
-                                                transition: 'all 0.3s ease'
+                                                borderTop: `6px solid ${severity === 'Major' ? 'hsl(var(--destructive))' : severity === 'Moderate' ? 'hsl(var(--warning))' : 'hsl(var(--success))'}`,
+                                                boxShadow: highlightedInteractionIndex === index ? '0 0 0 3px hsl(var(--primary))' : 'var(--shadow)',
+                                                transform: highlightedInteractionIndex === index ? 'scale(1.03)' : 'none',
+                                                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                                             }}
                                         >
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span className={`badge ${severityClass}`}>{severity}</span>
+                                                <span className={`accessible-chip ${severity.toLowerCase()}`}>{severity}</span>
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                     <button onClick={() => setSelectedDrugForInfo(interaction.drug1)} className="btn-ghost" style={{ padding: '0.2rem' }} title={`Info for ${interaction.drug1}`}>
                                                         <Info size={16} />
@@ -728,7 +735,7 @@ function CheckerPage() {
                                     );
                                 })
                         ) : (
-                            <div className="card" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem' }}>
+                            <div className="surface-card" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem' }}>
                                 <ShieldAlert size={40} style={{ color: 'var(--success)', marginBottom: '1rem', opacity: 0.5 }} />
                                 <h3>No Clinical Interactions Found</h3>
                                 <p style={{ color: 'var(--text-muted)' }}>The selected drug combinations show no known significant interactions in our primary database.</p>
@@ -739,9 +746,9 @@ function CheckerPage() {
             )}
 
             {selectedDrugForInfo && (
-                <DrugDetailsPanel 
-                    drugName={selectedDrugForInfo} 
-                    onClose={() => setSelectedDrugForInfo(null)} 
+                <DrugDetailsPanel
+                    drugName={selectedDrugForInfo}
+                    onClose={() => setSelectedDrugForInfo(null)}
                 />
             )}
         </div>

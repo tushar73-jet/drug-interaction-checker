@@ -37,7 +37,7 @@ app.use(cors({
         }
     },
     methods: ['GET', 'POST', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
 }));
 
 import { authMiddleware } from './middlewares/auth';
@@ -63,5 +63,5 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Senior-grade server running on http://localhost:${PORT}`);
+    console.log(`server running on http://localhost:${PORT}`);
 });

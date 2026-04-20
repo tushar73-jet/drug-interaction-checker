@@ -13,7 +13,7 @@ const DrugDetailsPanel = ({ drugName, onClose }) => {
         const fetchDetails = async () => {
             setLoading(true);
             try {
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
                 const response = await fetch(
                     `${API_BASE_URL}/api/v1/drugs/details/${drugName}`,
                     { signal: controller.signal }

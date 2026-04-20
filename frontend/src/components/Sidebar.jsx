@@ -9,10 +9,10 @@ const Sidebar = ({ isOpen, onClose, onNavItemClick }) => {
     const { logout } = useAuth();
 
     const navItems = [
-        { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-        { to: '/checker', icon: <Pill size={20} />, label: 'Check Interactions' },
-        { to: '/history', icon: <History size={20} />, label: 'History' },
-        { to: '/about', icon: <Info size={20} />, label: 'About' },
+        { to: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+        { to: '/dashboard/checker', icon: <Pill size={20} />, label: 'Check Interactions' },
+        { to: '/dashboard/history', icon: <History size={20} />, label: 'History' },
+        { to: '/dashboard/about', icon: <Info size={20} />, label: 'About' },
     ];
 
     const handleNavClick = () => {
