@@ -12,7 +12,7 @@ const DashboardPage = () => {
         const fetchStats = async () => {
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/drugs/stats`);
+                const response = await fetch(`${API_BASE_URL}/api/v1/drugs/stats`);
                 if (!response.ok) throw new Error(`Stats API error: ${response.status}`);
                 const backendStats = await response.json();
 

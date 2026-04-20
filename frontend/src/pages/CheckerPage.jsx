@@ -38,7 +38,7 @@ function CheckerPage() {
             const fetchRemoteProfiles = async () => {
                 try {
                     const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                    const response = await fetch(`${API_BASE_URL}/api/profiles`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/profiles`, {
                         headers: { 'x-user-id': user.id },
                         signal: controller.signal
                     });
@@ -99,10 +99,10 @@ function CheckerPage() {
             let foundDrugs = [];
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/drugs/search?q=${encodeURIComponent(query)}`)
+                const response = await fetch(`${API_BASE_URL}/api/v1/drugs/search?q=${encodeURIComponent(query)}`)
                 if (response.ok) {
                     const data = await response.json()
-                    foundDrugs = data.drugs || []
+                    foundDrugs = data.data?.drugs || []
                 } else {
                     throw new Error('Backend unavailable');
                 }
@@ -173,7 +173,7 @@ function CheckerPage() {
         if (isSignedIn && user?.id) {
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/profiles`, {
+                const response = await fetch(`${API_BASE_URL}/api/v1/profiles`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ function CheckerPage() {
         if (isSignedIn && user?.id) {
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/profiles/${id}`, {
+                const response = await fetch(`${API_BASE_URL}/api/v1/profiles/${id}`, {
                     method: 'DELETE',
                     headers: { 'x-user-id': user.id }
                 });
@@ -256,7 +256,7 @@ function CheckerPage() {
             try {
                 const drugNames = selectedDrugs.map(d => d.name);
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/interactions/check`, {
+                const response = await fetch(`${API_BASE_URL}/api/v1/interactions/check`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ drugs: drugNames }),
@@ -264,7 +264,7 @@ function CheckerPage() {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    foundInteractions = data.interactions || [];
+                    foundInteractions = data.data?.interactions || [];
                 } else {
                     throw new Error(`Server error: ${response.status}`);
                 }

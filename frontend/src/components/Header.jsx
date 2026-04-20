@@ -36,11 +36,11 @@ const Header = ({ onMenuClick }) => {
             }
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${API_BASE_URL}/api/drugs/search?q=${query}`);
+                const response = await fetch(`${API_BASE_URL}/api/v1/drugs/search?q=${query}`);
                 if (response.ok) {
                     const data = await response.json();
-                    searchCache.current[query] = data.drugs || [];
-                    setSuggestions(data.drugs || []);
+                    searchCache.current[query] = data.data?.drugs || [];
+                    setSuggestions(data.data?.drugs || []);
                 }
             } catch (error) {
                 console.error('Header search failed:', error);
