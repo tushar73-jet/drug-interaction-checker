@@ -15,36 +15,29 @@ const normalizeDrugName = (name: string): string =>
     name.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
 export const checkInteractions = async (drugs: string[]): Promise<InteractionResult[]> => {
-    if (!drugs || !Array.isArray(drugs) || drugs.length < 2) {
-        return [];
-    }
+    if (!drugs || drugs.length < 2) return [];
 
-    const uniqueDrugs = Array.from(new Set(drugs.map(normalizeDrugName))).filter(Boolean);
+    const uniqueNames = Array.from(new Set(drugs.map(normalizeDrugName))).filter(Boolean);
+    if (uniqueNames.length < 2) return [];
 
-    if (uniqueDrugs.length < 2) {
-        return [];
-    }
-
-    // Build an explicit OR clause for every unique pair in both directions so that
-    // an interaction stored as { drug1: 'Warfarin', drug2: 'Aspirin' } is returned
-    // regardless of the order the caller supplies the drug names.
-    const orConditions: { drug1: string; drug2: string }[] = [];
-    for (let i = 0; i < uniqueDrugs.length; i++) {
-        for (let j = i + 1; j < uniqueDrugs.length; j++) {
-            const a = uniqueDrugs[i];
-            const b = uniqueDrugs[j];
-            orConditions.push({ drug1: a, drug2: b });
-            orConditions.push({ drug1: b, drug2: a });
-        }
-    }
-
+    // Query interactions across the normalized many-to-many relationship.
+    // We look for any interaction where both drug names are in our input list.
     const interactions = await prisma.drugInteraction.findMany({
-        where: { OR: orConditions },
+        where: {
+            AND: [
+                { drug1: { name: { in: uniqueNames } } },
+                { drug2: { name: { in: uniqueNames } } }
+            ]
+        },
+        include: {
+            drug1: true,
+            drug2: true
+        }
     });
 
     return interactions.map(interaction => ({
-        drug1: interaction.drug1,
-        drug2: interaction.drug2,
+        drug1: interaction.drug1.name,
+        drug2: interaction.drug2.name,
         description: interaction.description,
         severity: interaction.severity,
     }));

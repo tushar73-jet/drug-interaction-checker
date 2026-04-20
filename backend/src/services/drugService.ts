@@ -4,14 +4,8 @@ let drugCache: string[] | null = null;
 
 const loadDrugCache = async () => {
     if (drugCache !== null) return;
-    const results = await prisma.$queryRaw<{ name: string }[]>`
-        SELECT DISTINCT name FROM (
-            SELECT drug1 AS name FROM DrugInteraction
-            UNION
-            SELECT drug2 AS name FROM DrugInteraction
-        )
-    `;
-    drugCache = results.map(r => r.name).sort();
+    const drugs = await prisma.drug.findMany({ select: { name: true } });
+    drugCache = drugs.map(d => d.name).sort();
 };
 
 export const searchDrugs = async (query: string, limit: number = 20): Promise<{ name: string }[]> => {
@@ -22,38 +16,25 @@ export const searchDrugs = async (query: string, limit: number = 20): Promise<{ 
     await loadDrugCache();
 
     const normalizedQuery = query.toLowerCase().trim();
+    const matches = drugCache!
+        .filter(name => name.toLowerCase().includes(normalizedQuery))
+        .sort((a, b) => {
+            const aStart = a.toLowerCase().startsWith(normalizedQuery);
+            const bStart = b.toLowerCase().startsWith(normalizedQuery);
+            if (aStart && !bStart) return -1;
+            if (!aStart && bStart) return 1;
+            return a.localeCompare(b);
+        })
+        .slice(0, limit);
 
-    const startsWith: string[] = [];
-    const contains: string[] = [];
-
-    for (const drug of drugCache!) {
-        const lowerDrug = drug.toLowerCase();
-        if (lowerDrug.startsWith(normalizedQuery)) {
-            startsWith.push(drug);
-        } else if (lowerDrug.includes(normalizedQuery)) {
-            contains.push(drug);
-        }
-    }
-
-    // Combine exact startsWith hits first, then include partial matches
-    const combined = [...startsWith, ...contains].slice(0, limit);
-
-    return combined.map(name => ({ name }));
+    return matches.map(name => ({ name }));
 };
 
 export const getStats = async () => {
-    const totalInteractions = await prisma.drugInteraction.count();
-
-    // Count unique drugs across both columns
-    const results = await prisma.$queryRaw<{ count: bigint }[]>`
-        SELECT COUNT(DISTINCT name) as count FROM (
-            SELECT drug1 AS name FROM DrugInteraction
-            UNION
-            SELECT drug2 AS name FROM DrugInteraction
-        )
-    `;
-
-    const totalDrugs = Number(results[0].count);
+    const [totalDrugs, totalInteractions] = await Promise.all([
+        prisma.drug.count(),
+        prisma.drugInteraction.count()
+    ]);
 
     return {
         totalDrugs,
@@ -62,37 +43,22 @@ export const getStats = async () => {
 };
 
 export const getDrugDetails = async (name: string) => {
-    const mockDetails: Record<string, any> = {
-        'Aspirin': {
-            class: 'NSAID / Antiplatelet',
-            indications: ['Pain management', 'Fever reduction', 'Ischemic stroke prophylaxis'],
-            action: 'Irreversibly inhibits COX-1 and COX-2',
-            warnings: ['Gastric ulceration', 'Gastrointestinal bleeding', 'Reye syndrome in children']
-        },
-        'Warfarin': {
-            class: 'Anticoagulant (Vitamin K Antagonist)',
-            indications: ['DVT prophylaxis', 'PE management', 'Atrial fibrillation'],
-            action: 'Inhibits Vitamin K epoxide reductase',
-            warnings: ['Life-threatening hemorrhage', 'Teratogenicity', 'Frequent INR monitoring required']
-        },
-        'Lisinopril': {
-            class: 'ACE Inhibitor',
-            indications: ['Hypertension', 'Heart failure', 'Post-MI management'],
-            action: 'Prevents conversion of Angio I to Angio II',
-            warnings: ['Hyperkalemia', 'Angioedema', 'Renal function monitoring']
-        },
-        'Metformin': {
-            class: 'Biguanide (Antidiabetic)',
-            indications: ['Type 2 Diabetes Mellitus', 'PCOS'],
-            action: 'Decreases hepatic glucose production & improves insulin sensitivity',
-            warnings: ['Lactic acidosis risk (rare)', 'Vitamin B12 deficiency', 'Renal contraindications']
-        }
-    };
+    const drug = await prisma.drug.findUnique({
+        where: { name }
+    });
 
-    return mockDetails[name] || {
-        class: 'Information not localized',
-        indications: ['Standard therapeutic use'],
-        action: 'Standard physiological mechanism',
+    if (!drug) {
+        return {
+            class: 'Information not localized',
+            action: 'Standard physiological mechanism',
+            warnings: ['Standard clinical precautions']
+        };
+    }
+
+    return {
+        class: drug.class || 'Class not specified',
+        action: drug.mechanism || 'Mechanism not specified',
+        indications: ['Consult clinical guidelines'],
         warnings: ['Standard clinical precautions']
     };
 };

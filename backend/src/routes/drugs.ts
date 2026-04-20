@@ -12,24 +12,17 @@ const QUERY_REGEX = /^[a-zA-Z0-9 '\-]{1,100}$/;
 const isValidQuery = (q: unknown): q is string =>
     typeof q === 'string' && QUERY_REGEX.test(q.trim());
 
-router.get('/search', async (req: Request, res: Response) => {
+import { validate } from '../middlewares/validate';
+import { drugSearchSchema } from '../validation/schemas';
+
+router.get('/search', validate(drugSearchSchema), async (req: Request, res: Response) => {
     try {
-        const query = req.query.q;
-
-        if (!query) {
-            return res.json({ drugs: [] });
-        }
-
-        if (!isValidQuery(query)) {
-            return res.status(400).json({ error: "Invalid search query. Use only letters, digits, spaces, hyphens, or apostrophes (max 100 chars)." });
-        }
-
-        const drugs = await searchDrugs(query as string);
-        res.json({ drugs });
-
+        const query = req.query.q as string;
+        const drugs = await searchDrugs(query);
+        res.json({ status: 'success', data: { drugs } });
     } catch (error) {
         console.error("Error in drug search route:", error);
-        res.status(500).json({ error: "Search failed" });
+        res.status(500).json({ error: "Drug search service unavailable" });
     }
 });
 

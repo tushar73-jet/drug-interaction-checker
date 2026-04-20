@@ -1,38 +1,67 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Drug {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  class       String?
+  mechanism   String?
+  interactionsAsDrug1 DrugInteraction[] @relation("Drug1Relation")
+  interactionsAsDrug2 DrugInteraction[] @relation("Drug2Relation")
 }
 
 model DrugInteraction {
-  id          Int    @id @default(autoincrement())
-  drug1       String
-  drug2       String
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  drug1Id     String @db.ObjectId
+  drug2Id     String @db.ObjectId
   description String
-  severity    String // E.g., Major, Moderate, Minor
+  severity    String // Major, Moderate, Minor
+  
+  drug1       Drug   @relation("Drug1Relation", fields: [drug1Id], references: [id])
+  drug2       Drug   @relation("Drug2Relation", fields: [drug2Id], references: [id])
 
-  @@index([drug1])
-  @@index([drug2])
+  @@unique([drug1Id, drug2Id])
 }
 
 model PatientProfile {
-  id        String   @id @default(uuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   clerkId   String
   name      String
-  drugs     String   // Store as JSON stringified array for SQLite compatibility
-  notes     String?  // Optional clinician notes
+  notes     String?
+  drugs     ProfileDrug[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([clerkId])
+}
+
+model ProfileDrug {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  profileId String   @db.ObjectId
+  drugName  String
+  profile   PatientProfile @relation(fields: [profileId], references: [id])
+
+  @@index([profileId])
+}
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  clerkId   String?
+  action    String   
+  resource  String   
+  payload   Json?
+  ipAddress String?
+  timestamp DateTime @default(now())
+
+  @@index([clerkId])
+  @@index([timestamp])
 }
 
 
