@@ -3,7 +3,10 @@ import { Heart, Shield, Zap, Users, ArrowRight, Check, Menu, X, ShieldAlert, Loc
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { useAuth } from '../components/AuthContext';
+
 const LandingPage = () => {
+  const { isSignedIn } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [stats, setStats] = useState({ totalDrugs: '1,700+', totalInteractions: '190,000+', accuracy: '99.9%' });
@@ -121,7 +124,7 @@ const LandingPage = () => {
 
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate(isSignedIn ? '/dashboard' : '/login')}
             className="desktop-only"
             style={{
               padding: '0.75rem 1.5rem',
@@ -135,12 +138,12 @@ const LandingPage = () => {
               transition: 'all 0.2s ease'
             }}
           >
-            Login
+            {isSignedIn ? 'Dashboard' : 'Login'}
           </button>
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/signup')} 
+            onClick={() => navigate(isSignedIn ? '/dashboard' : '/signup')} 
             style={{
               padding: '0.75rem 1.5rem',
               background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
@@ -206,10 +209,10 @@ const LandingPage = () => {
             ))}
             <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)' }} />
             <button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate(isSignedIn ? '/dashboard' : '/login')}
               style={{ textAlign: 'left', background: 'transparent', border: 'none', color: '#14b8a6', fontSize: '1.1rem', fontWeight: '600' }}
             >
-              Login
+              {isSignedIn ? 'Dashboard' : 'Login'}
             </button>
           </motion.div>
         )}
@@ -328,7 +331,7 @@ const LandingPage = () => {
             <motion.button 
               whileHover={{ scale: 1.05, boxShadow: '0 10px 25px -5px rgba(20, 184, 166, 0.4)' }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/signup')} 
+              onClick={() => navigate(isSignedIn ? '/dashboard' : '/signup')} 
               style={{
                 padding: '1.25rem 2.5rem',
                 background: '#14b8a6',

@@ -47,9 +47,10 @@ function CheckerPage() {
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        setSavedProfiles(data.profiles);
+                        const profiles = data.data?.profiles || [];
+                        setSavedProfiles(profiles);
                         // Keep localStorage in sync so the offline fallback always has fresh data.
-                        localStorage.setItem('saved_patient_profiles', JSON.stringify(data.profiles));
+                        localStorage.setItem('saved_patient_profiles', JSON.stringify(profiles));
                     }
                 } catch (error) {
                     if (error.name !== 'AbortError') {
@@ -191,11 +192,15 @@ function CheckerPage() {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setSavedProfiles(prev => {
-                        const otherItems = prev.filter(p => p.name !== data.profile.name);
-                        return [data.profile, ...otherItems];
-                    });
-                    return;
+                    const newProfile = data.data?.profile;
+                    if (newProfile) {
+                        setSavedProfiles(prev => {
+                            const otherItems = prev.filter(p => p.name !== newProfile.name);
+                            return [newProfile, ...otherItems];
+                        });
+                        setPatientName('');
+                        return;
+                    }
                 }
             } catch (err) {
                 console.error("Failed to save remote profile:", err);
@@ -557,27 +562,27 @@ function CheckerPage() {
                                 </button>
                             </div>
 
-                            {savedProfiles.length > 0 && (
-                                <div style={{ marginTop: '0.75rem' }}>
-                                    <select
-                                        onChange={(e) => {
-                                            if (e.target.value) {
-                                                loadProfile(savedProfiles.find(p => p.id.toString() === e.target.value));
-                                                e.target.value = '';
-                                            }
-                                        }}
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.5rem',
-                                            borderRadius: '0.5rem',
-                                            border: '1px solid var(--border)',
-                                            background: 'var(--input-bg)',
-                                            color: 'var(--text-main)',
-                                            fontSize: '0.875rem'
-                                        }}
-                                    >
-                                        <option value="">Load Saved Profile...</option>
-                                        {savedProfiles.map(p => (
+                                                            {savedProfiles && savedProfiles.length > 0 && (
+                                                                <div style={{ marginTop: '0.75rem' }}>
+                                                                    <select
+                                                                        onChange={(e) => {
+                                                                            if (e.target.value) {
+                                                                                loadProfile(savedProfiles.find(p => p.id.toString() === e.target.value));
+                                                                                e.target.value = '';
+                                                                            }
+                                                                        }}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                            padding: '0.5rem',
+                                                                            borderRadius: '0.5rem',
+                                                                            border: '1px solid var(--border)',
+                                                                            background: 'var(--input-bg)',
+                                                                            color: 'var(--text-main)',
+                                                                            fontSize: '0.875rem'
+                                                                        }}
+                                                                    >
+                                                                        <option value="">Load Saved Profile...</option>
+                                                                        {savedProfiles.map(p => (
                                             <option key={p.id} value={p.id}>{p.name} ({p.drugs.length} drugs)</option>
                                         ))}
                                     </select>

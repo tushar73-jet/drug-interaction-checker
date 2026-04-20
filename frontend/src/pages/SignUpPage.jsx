@@ -1,8 +1,19 @@
 import React from 'react';
 import { SignUp } from '@clerk/react';
 import { ShieldAlert } from 'lucide-react';
+import { useAuth } from '../components/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const SignUpPage = () => {
+    const { isSignedIn, isLoaded } = useAuth();
+    const navigate = useNavigate();
+
+    React.useEffect(() => {
+        if (isLoaded && isSignedIn) {
+            navigate('/dashboard');
+        }
+    }, [isLoaded, isSignedIn, navigate]);
+
     return (
         <div style={{
             minHeight: '100vh',
