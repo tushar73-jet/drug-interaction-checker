@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Search, Plus, X, AlertTriangle, FileText, Activity, ShieldAlert, Save, Info } from 'lucide-react'
+import { Search, Plus, X, AlertTriangle, FileText, Activity, ShieldAlert, Save, Info, Sparkles, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from 'lucide-react'
 import GraphView from '../GraphView'
 import DrugDetailsPanel from '../components/DrugDetailsPanel'
 import { useAuth } from '../components/AuthContext'
@@ -29,6 +29,10 @@ function CheckerPage() {
     // Phase 2: Interactive features
     const [selectedDrugForInfo, setSelectedDrugForInfo] = useState(null);
     const [highlightedInteractionIndex, setHighlightedInteractionIndex] = useState(null);
+
+    // Phase 3: AI Explain — per-interaction state map keyed by "drug1|drug2"
+    // Each entry: { loading, explanation, citations, error, open }
+    const [explainStates, setExplainStates] = useState({});
 
     // Fetch remote profiles on login
     useEffect(() => {
@@ -314,6 +318,78 @@ function CheckerPage() {
         }
     }
 
+    // ---------------------------------------------------------------------------
+    // AI Explain
+    // ---------------------------------------------------------------------------
+    const explainInteraction = async (interaction) => {
+        const key = `${interaction.drug1}|${interaction.drug2}`;
+
+        // Toggle closed if already open and loaded
+        if (explainStates[key]?.open && explainStates[key]?.explanation) {
+            setExplainStates(prev => ({
+                ...prev,
+                [key]: { ...prev[key], open: false }
+            }));
+            return;
+        }
+
+        // If already loaded, just re-open
+        if (explainStates[key]?.explanation) {
+            setExplainStates(prev => ({
+                ...prev,
+                [key]: { ...prev[key], open: true }
+            }));
+            return;
+        }
+
+        // Start loading
+        setExplainStates(prev => ({
+            ...prev,
+            [key]: { loading: true, explanation: null, citations: [], error: null, open: true }
+        }));
+
+        try {
+            const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+            const response = await fetch(`${API_BASE_URL}/api/v1/interactions/explain`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    drug1: interaction.drug1,
+                    drug2: interaction.drug2,
+                    description: interaction.description
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.message || `Server error ${response.status}`);
+            }
+
+            const data = await response.json();
+            setExplainStates(prev => ({
+                ...prev,
+                [key]: {
+                    loading: false,
+                    explanation: data.data?.explanation || 'No explanation available.',
+                    citations: data.data?.citations || [],
+                    error: null,
+                    open: true
+                }
+            }));
+        } catch (err) {
+            setExplainStates(prev => ({
+                ...prev,
+                [key]: {
+                    loading: false,
+                    explanation: null,
+                    citations: [],
+                    error: err.message || 'Failed to fetch AI explanation.',
+                    open: true
+                }
+            }));
+        }
+    };
+
     const exportToPDF = () => {
         if (!interactions) return;
 
@@ -372,10 +448,19 @@ function CheckerPage() {
         } else {
             interactions.forEach(interaction => {
                 const severity = interaction.severity || 'Moderate';
+                const key = `${interaction.drug1}|${interaction.drug2}`;
+                const aiExplain = explainStates[key];
+                let descriptionText = interaction.description;
+                if (aiExplain?.explanation) {
+                    descriptionText += `\n\nAI Analysis:\n${aiExplain.explanation}`;
+                    if (aiExplain.citations?.length > 0) {
+                        descriptionText += `\n\nSources:\n${aiExplain.citations.map((c, i) => `[${i+1}] ${c.title}: ${c.url}`).join('\n')}`;
+                    }
+                }
                 const rowData = [
                     `${interaction.drug1} / ${interaction.drug2}`,
                     severity.toUpperCase(),
-                    interaction.description
+                    descriptionText
                 ];
                 tableRows.push(rowData);
             });
@@ -736,6 +821,100 @@ function CheckerPage() {
                                             <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
                                                 {interaction.description}
                                             </p>
+
+                                            {/* AI Explain Button & Panel */}
+                                            {(() => {
+                                                const key = `${interaction.drug1}|${interaction.drug2}`;
+                                                const es = explainStates[key];
+                                                return (
+                                                    <>
+                                                        <button
+                                                            className="btn-explain"
+                                                            onClick={() => explainInteraction(interaction)}
+                                                            disabled={es?.loading}
+                                                            style={{ marginTop: '0.5rem' }}
+                                                        >
+                                                            {es?.loading ? (
+                                                                <><RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} /> Researching...</>
+                                                            ) : es?.explanation ? (
+                                                                es.open ? <><ChevronUp size={14} /> Hide AI Analysis</> : <><ChevronDown size={14} /> Show AI Analysis</>
+                                                            ) : (
+                                                                <><Sparkles size={14} /> Explain This Interaction</>
+                                                            )}
+                                                        </button>
+
+                                                        {es?.open && (
+                                                            <div className="ai-explain-panel">
+                                                                <div className="ai-explain-header" onClick={() => explainInteraction(interaction)}>
+                                                                    <span className="ai-explain-title">
+                                                                        <Sparkles size={15} />
+                                                                        AI Clinical Analysis · Worko Research Assistant
+                                                                    </span>
+                                                                    {es?.loading ? null : es?.open ? <ChevronUp size={16} color="hsl(175,84%,32%)" /> : <ChevronDown size={16} color="hsl(175,84%,32%)" />}
+                                                                </div>
+
+                                                                <div className="ai-explain-body">
+                                                                    {es?.loading && (
+                                                                        <>
+                                                                            <div className="ai-skeleton" style={{ height: '14px', marginBottom: '8px', width: '92%' }} />
+                                                                            <div className="ai-skeleton" style={{ height: '14px', marginBottom: '8px', width: '85%' }} />
+                                                                            <div className="ai-skeleton" style={{ height: '14px', marginBottom: '8px', width: '96%' }} />
+                                                                            <div className="ai-skeleton" style={{ height: '14px', marginBottom: '8px', width: '78%' }} />
+                                                                            <div className="ai-skeleton" style={{ height: '14px', width: '60%' }} />
+                                                                        </>
+                                                                    )}
+
+                                                                    {es?.error && (
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)', fontSize: '0.875rem', padding: '0.5rem' }}>
+                                                                            <AlertTriangle size={15} />
+                                                                            {es.error}
+                                                                            <button
+                                                                                className="btn-explain"
+                                                                                onClick={() => {
+                                                                                    setExplainStates(prev => ({ ...prev, [key]: undefined }));
+                                                                                    setTimeout(() => explainInteraction(interaction), 50);
+                                                                                }}
+                                                                                style={{ marginLeft: 'auto', border: '1px solid var(--danger)', color: 'var(--danger)', background: 'transparent' }}
+                                                                            >
+                                                                                <RefreshCw size={12} /> Retry
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {es?.explanation && (
+                                                                        <>
+                                                                            <p className="ai-explanation-text">{es.explanation}</p>
+
+                                                                            {es.citations?.length > 0 && (
+                                                                                <div className="ai-citations">
+                                                                                    <div className="ai-citations-title">📚 Sources ({es.citations.length})</div>
+                                                                                    <div className="citation-list">
+                                                                                        {es.citations.map((c, ci) => (
+                                                                                            <div key={ci} className="citation-item">
+                                                                                                <span className="citation-number">{ci + 1}</span>
+                                                                                                <a
+                                                                                                    href={c.url}
+                                                                                                    target="_blank"
+                                                                                                    rel="noopener noreferrer"
+                                                                                                    className="citation-link"
+                                                                                                    title={c.snippet}
+                                                                                                >
+                                                                                                    {c.title}
+                                                                                                    <ExternalLink size={10} style={{ display: 'inline', marginLeft: '4px', verticalAlign: 'middle' }} />
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     );
                                 })
