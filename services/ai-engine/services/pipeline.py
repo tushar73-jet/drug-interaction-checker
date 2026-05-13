@@ -157,17 +157,23 @@ async def synthesise_explanation(
     )
 
     prompt = (
-        "You are a clinical pharmacology assistant helping clinicians understand drug interactions.\n\n"
+        "You are a Senior Clinical Pharmacologist providing a detailed interaction report.\n\n"
         f"Drug Interaction: {drug1} + {drug2}\n"
         f"Known Risk: {description}\n\n"
         f"Medical Literature Sources:\n{source_context}\n\n"
-        "Write a structured clinical explanation (250-350 words) that includes:\n"
-        "1. The pharmacological mechanism of this interaction\n"
-        "2. The clinical significance and severity\n"
-        "3. Specific risks clinicians should monitor for\n"
-        "4. Dosing or management considerations where applicable\n\n"
-        "Write in clear medical prose. Reference sources by number where relevant "
-        "(e.g. 'Studies show [1]...'). Do not use headers or bullet points."
+        "### YOUR TASK:\n"
+        "Synthesize a structured clinical explanation (250-350 words). You MUST use the following headers:\n\n"
+        "**Mechanism of Action**\n"
+        "Explain the pharmacological basis (e.g., P-gp induction, CYP3A4 inhibition).\n\n"
+        "**Clinical Significance**\n"
+        "Describe the patient-level impact and severity.\n\n"
+        "**Management Strategy**\n"
+        "Provide actionable clinical monitoring or dosing advice.\n\n"
+        "### FORMATTING RULES:\n"
+        "- Use **bold text** for emphasis.\n"
+        "- Use bullet points for management steps.\n"
+        "- Use inline citations like [1], [2] to ground your answer in the sources.\n"
+        "- Write in professional, clinical language."
     )
 
     completion = await groq.chat.completions.create(
@@ -225,3 +231,43 @@ async def run_explain_pipeline(
         return {"explanation": explanation, "citations": citations}
 
     return await asyncio.wait_for(_pipeline(), timeout=timeout)
+
+
+async def run_chat_pipeline(
+    drug1: str,
+    drug2: str,
+    context: str,
+    question: str,
+    citations: list[dict[str, str]],
+    groq_api_key: str,
+) -> str:
+    """
+    Handles follow-up questions about an interaction.
+    """
+    groq = AsyncGroq(api_key=groq_api_key)
+    
+    source_context = "\n\n".join(
+        f"[{i+1}] {c['title']}\n{c['snippet']}"
+        for i, c in enumerate(citations)
+    )
+
+    prompt = (
+        "You are a Senior Clinical Pharmacologist answering a follow-up question.\n\n"
+        f"Context (Original Interaction Analysis for {drug1} + {drug2}):\n{context}\n\n"
+        f"Original Sources:\n{source_context}\n\n"
+        f"USER QUESTION: {question}\n\n"
+        "### INSTRUCTIONS:\n"
+        "1. Answer the question specifically using the context and sources provided.\n"
+        "2. If the answer is not in the context, use your general clinical knowledge but state it clearly.\n"
+        "3. Maintain a professional, clinical tone.\n"
+        "4. Keep the answer concise (under 150 words)."
+    )
+
+    completion = await groq.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=512,
+    )
+
+    return (completion.choices[0].message.content or "I'm sorry, I couldn't process that question.").strip()

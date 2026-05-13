@@ -71,4 +71,56 @@ export const explainInteractionController = async (
         });
     }
 };
+export const chatSchema = z.object({
+    body: z.object({
+        drug1: z.string(),
+        drug2: z.string(),
+        context: z.string(),
+        question: z.string().min(1).max(500),
+        citations: z.array(z.any()).optional(),
+    }),
+});
 
+type ChatInput = z.infer<typeof chatSchema>['body'];
+
+export const chatInteractionController = async (
+    req: Request<{}, {}, ChatInput>,
+    res: Response
+) => {
+    const { drug1, drug2, context, question, citations } = req.body;
+
+    await auditLog(
+        'CHAT_INTERACTION',
+        `AI Chat Follow-up: ${drug1} + ${drug2}`,
+        (req as any).auth?.userId,
+        { drug1, drug2, questionLength: question.length },
+        req.ip
+    );
+
+    try {
+        const aiResponse = await fetch(`${AI_ENGINE_URL}/explain/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ drug1, drug2, context, question, citations }),
+            signal: AbortSignal.timeout(35_000),
+        });
+
+        if (!aiResponse.ok) {
+            return res.status(aiResponse.status).json({
+                status: 'error',
+                message: 'AI chat service unavailable.',
+            });
+        }
+
+        const data = await aiResponse.json();
+        return res.status(200).json({
+            status: 'success',
+            data: { answer: data.answer },
+        });
+    } catch (error: any) {
+        return res.status(502).json({
+            status: 'error',
+            message: 'AI chat service is temporarily unavailable.',
+        });
+    }
+};

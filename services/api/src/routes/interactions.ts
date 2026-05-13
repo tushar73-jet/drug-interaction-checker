@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { checkInteractionsController } from '../controllers/interaction.controller';
-import { explainInteractionController, explainSchema } from '../controllers/explain.controller';
+import { explainInteractionController, explainSchema, chatInteractionController, chatSchema } from '../controllers/explain.controller';
 import { validate } from '../middlewares/validate';
 import { interactionCheckSchema } from '../validation/schemas';
 
@@ -26,6 +26,17 @@ router.post(
   '/explain',
   validate(explainSchema),
   explainInteractionController
+);
+
+/**
+ * @route   POST /api/v1/interactions/chat
+ * @desc    Ask follow-up questions about a drug interaction
+ * @access  Public
+ */
+router.post(
+  '/chat',
+  validate(chatSchema),
+  chatInteractionController
 );
 
 export default router;

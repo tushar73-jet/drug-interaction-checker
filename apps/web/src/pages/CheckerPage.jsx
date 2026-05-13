@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Search, Plus, X, AlertTriangle, FileText, Activity, ShieldAlert, Save, Info, Sparkles, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from 'lucide-react'
+import { Search, Plus, X, AlertTriangle, FileText, Activity, ShieldAlert, Save, Info, Sparkles, ChevronDown, ChevronUp, ExternalLink, RefreshCw, ArrowRight } from 'lucide-react'
 import GraphView from '../GraphView'
 import DrugDetailsPanel from '../components/DrugDetailsPanel'
 import { useAuth } from '../components/AuthContext'
@@ -228,6 +228,54 @@ function CheckerPage() {
         setSelectedDrugs(profile.drugs.map(d => ({ name: d })));
         setClinicianNotes(profile.notes || '');
         setInteractions(null);
+    };
+
+    const askFollowUp = async (interaction, question) => {
+        const key = `${interaction.drug1}|${interaction.drug2}`;
+        const current = explainStates[key];
+        if (!current || !question.trim()) return;
+
+        setExplainStates(prev => ({
+            ...prev,
+            [key]: { ...current, chatLoading: true, chatError: null }
+        }));
+
+        try {
+            const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+            const token = isSignedIn ? await getToken() : null;
+            
+            const response = await fetch(`${API_BASE_URL}/api/v1/interactions/chat`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token && { 'Authorization': `Bearer ${token}` })
+                },
+                body: JSON.stringify({
+                    drug1: interaction.drug1,
+                    drug2: interaction.drug2,
+                    context: current.explanation,
+                    question: question,
+                    citations: current.citations
+                }),
+            });
+
+            if (!response.ok) throw new Error('Failed to get answer');
+            const data = await response.json();
+
+            setExplainStates(prev => ({
+                ...prev,
+                [key]: { 
+                    ...current, 
+                    chatLoading: false, 
+                    chatHistory: [...(current.chatHistory || []), { q: question, a: data.data.answer }]
+                }
+            }));
+        } catch (err) {
+            setExplainStates(prev => ({
+                ...prev,
+                [key]: { ...current, chatLoading: false, chatError: 'Failed to get answer. Please try again.' }
+            }));
+        }
     };
 
     const checkInteractions = async () => {
@@ -822,11 +870,10 @@ function CheckerPage() {
                                                                 <div className="ai-explain-header" onClick={() => explainInteraction(interaction)}>
                                                                     <span className="ai-explain-title">
                                                                         <Sparkles size={15} />
-                                                                        AI Clinical Analysis · Worko Research Assistant
+                                                                        Clinical Interaction Analysis
                                                                     </span>
                                                                     {es?.loading ? null : es?.open ? <ChevronUp size={16} color="hsl(175,84%,32%)" /> : <ChevronDown size={16} color="hsl(175,84%,32%)" />}
                                                                 </div>
-
                                                                 <div className="ai-explain-body">
                                                                     {es?.loading && (
                                                                         <>
@@ -838,50 +885,97 @@ function CheckerPage() {
                                                                         </>
                                                                     )}
 
-                                                                    {es?.error && (
-                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)', fontSize: '0.875rem', padding: '0.5rem' }}>
-                                                                            <AlertTriangle size={15} />
-                                                                            {es.error}
-                                                                            <button
-                                                                                className="btn-explain"
-                                                                                onClick={() => {
-                                                                                    setExplainStates(prev => ({ ...prev, [key]: undefined }));
-                                                                                    setTimeout(() => explainInteraction(interaction), 50);
-                                                                                }}
-                                                                                style={{ marginLeft: 'auto', border: '1px solid var(--danger)', color: 'var(--danger)', background: 'transparent' }}
-                                                                            >
-                                                                                <RefreshCw size={12} /> Retry
-                                                                            </button>
+                                                                    {es?.explanation && !es?.loading && (
+                                                                        <div className="clinical-narrative">
+                                                                            {es.explanation.split('\n').map((line, i) => {
+                                                                                if (!line.trim()) return <div key={i} style={{ height: '0.75rem' }} />;
+                                                                                
+                                                                                if (line.startsWith('**') && line.endsWith('**')) {
+                                                                                    return <h4 key={i} className="narrative-header">{line.replace(/\*\*/g, '')}</h4>;
+                                                                                }
+
+                                                                                if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+                                                                                    return <li key={i} className="narrative-list-item">{line.trim().substring(2)}</li>;
+                                                                                }
+
+                                                                                const parts = line.split(/(\*\*.*?\*\*)/g);
+                                                                                return (
+                                                                                    <p key={i} className="narrative-text">
+                                                                                        {parts.map((part, pi) => 
+                                                                                            part.startsWith('**') && part.endsWith('**') 
+                                                                                                ? <strong key={pi}>{part.replace(/\*\*/g, '')}</strong> 
+                                                                                                : part
+                                                                                        )}
+                                                                                    </p>
+                                                                                );
+                                                                            })}
+
+                                                                            {/* Interactive Chat Section */}
+                                                                            <div className="ai-chat-section">
+                                                                                <div className="chat-history">
+                                                                                    {es.chatHistory?.map((chat, ci) => (
+                                                                                        <div key={ci} className="chat-thread">
+                                                                                            <div className="chat-q"><strong>Follow-up Q:</strong> {chat.q}</div>
+                                                                                            <div className="chat-a">{chat.a}</div>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+
+                                                                                {es.chatLoading && (
+                                                                                    <div className="chat-loading">
+                                                                                        <RefreshCw size={14} className="spin" /> Processing clinical inquiry...
+                                                                                    </div>
+                                                                                )}
+
+                                                                                <div className="follow-up-bar">
+                                                                                    <input 
+                                                                                        type="text" 
+                                                                                        placeholder="Ask a follow-up (e.g. 'Is this safe in renal failure?')" 
+                                                                                        onKeyDown={(e) => {
+                                                                                            if (e.key === 'Enter') {
+                                                                                                askFollowUp(interaction, e.target.value);
+                                                                                                e.target.value = '';
+                                                                                            }
+                                                                                        }}
+                                                                                    />
+                                                                                    <button onClick={(e) => {
+                                                                                        const input = e.currentTarget.previousSibling;
+                                                                                        askFollowUp(interaction, input.value);
+                                                                                        input.value = '';
+                                                                                    }}>
+                                                                                        <ArrowRight size={16} />
+                                                                                    </button>
+                                                                                </div>
+                                                                                {es.chatError && <div className="chat-error">{es.chatError}</div>}
+                                                                            </div>
                                                                         </div>
                                                                     )}
 
-                                                                    {es?.explanation && (
-                                                                        <>
-                                                                            <p className="ai-explanation-text">{es.explanation}</p>
+                                                                    {es?.error && (
+                                                                        <div className="ai-error-box">
+                                                                            <AlertTriangle size={15} />
+                                                                            <span>{es.error}</span>
+                                                                            <button onClick={() => {
+                                                                                setExplainStates(prev => ({ ...prev, [key]: undefined }));
+                                                                                setTimeout(() => explainInteraction(interaction), 50);
+                                                                            }}>Retry</button>
+                                                                        </div>
+                                                                    )}
 
-                                                                            {es.citations?.length > 0 && (
-                                                                                <div className="ai-citations">
-                                                                                    <div className="ai-citations-title">📚 Sources ({es.citations.length})</div>
-                                                                                    <div className="citation-list">
-                                                                                        {es.citations.map((c, ci) => (
-                                                                                            <div key={ci} className="citation-item">
-                                                                                                <span className="citation-number">{ci + 1}</span>
-                                                                                                <a
-                                                                                                    href={c.url}
-                                                                                                    target="_blank"
-                                                                                                    rel="noopener noreferrer"
-                                                                                                    className="citation-link"
-                                                                                                    title={c.snippet}
-                                                                                                >
-                                                                                                    {c.title}
-                                                                                                    <ExternalLink size={10} style={{ display: 'inline', marginLeft: '4px', verticalAlign: 'middle' }} />
-                                                                                                </a>
-                                                                                            </div>
-                                                                                        ))}
+                                                                    {es?.explanation && es.citations?.length > 0 && (
+                                                                        <div className="ai-citations">
+                                                                            <div className="ai-citations-title">📚 Clinical Sources</div>
+                                                                            <div className="citation-list">
+                                                                                {es.citations.map((c, ci) => (
+                                                                                    <div key={ci} className="citation-item">
+                                                                                        <span className="citation-number">{ci + 1}</span>
+                                                                                        <a href={c.url} target="_blank" rel="noopener noreferrer" className="citation-link">
+                                                                                            {c.title} <ExternalLink size={10} />
+                                                                                        </a>
                                                                                     </div>
-                                                                                </div>
-                                                                            )}
-                                                                        </>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             </div>
