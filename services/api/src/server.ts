@@ -40,7 +40,10 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
 }));
 
+import { clerkMiddleware } from '@clerk/express';
 import { authMiddleware } from './middlewares/auth';
+
+app.use(clerkMiddleware());
 
 // API Routes (v1)
 app.get('/api/v1/health', (req: Request, res: Response) => {

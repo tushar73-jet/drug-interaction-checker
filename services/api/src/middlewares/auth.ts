@@ -1,4 +1,3 @@
-import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
+import { requireAuth } from '@clerk/express';
 
-
-export const authMiddleware = ClerkExpressRequireAuth();
+export const authMiddleware = requireAuth();

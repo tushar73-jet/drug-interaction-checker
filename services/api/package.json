@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/tushar73-jet/drug-interaction-checker#readme",
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^5.0.0",
+    "@clerk/express": "^2.1.15",
     "@prisma/client": "^6.2.1",
     "@tavily/core": "^0.7.3",
     "cors": "^2.8.6",

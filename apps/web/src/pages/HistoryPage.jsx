@@ -10,7 +10,7 @@ const HistoryPage = () => {
     const navigate = useNavigate();
 
     const handleRerun = (item) => {
-        navigate('/checker', { state: { prefillDrugs: item.drugs, patientName: item.patientName } });
+        navigate('/dashboard/checker', { state: { prefillDrugs: item.drugs, patientName: item.patientName } });
     };
 
     const clearHistory = () => {
