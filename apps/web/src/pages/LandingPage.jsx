@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Shield, Zap, Users, ArrowRight, Check, Menu, X, ShieldAlert, Lock, ClipboardCheck, LayoutDashboard, Database, Cpu, Globe, Server } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
 
 import { useAuth } from '../components/AuthContext';
 

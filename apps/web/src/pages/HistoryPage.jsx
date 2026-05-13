@@ -1,21 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { History, Trash2, Calendar, Pill, ShieldAlert, ArrowRight, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const HistoryPage = () => {
-    const [history, setHistory] = useState([]);
+    const [history, setHistory] = useState(() => {
+        const savedHistory = localStorage.getItem('interaction_history');
+        return savedHistory ? JSON.parse(savedHistory) : [];
+    });
     const navigate = useNavigate();
 
     const handleRerun = (item) => {
         navigate('/checker', { state: { prefillDrugs: item.drugs, patientName: item.patientName } });
     };
-
-    useEffect(() => {
-        const savedHistory = localStorage.getItem('interaction_history');
-        if (savedHistory) {
-            setHistory(JSON.parse(savedHistory));
-        }
-    }, []);
 
     const clearHistory = () => {
         localStorage.removeItem('interaction_history');

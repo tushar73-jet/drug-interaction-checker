@@ -1,15 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { User, Bell, Search, Menu, Plus, Sun, Moon } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { UserButton } from '@clerk/react';
 import './Header.css';
 
 const Header = ({ onMenuClick }) => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const [query, setQuery] = useState('');
-    const [suggestions, setSuggestions] = useState([]);
     const [theme, setTheme] = useState(() => {
         return localStorage.getItem('theme') || 'light';
     });
@@ -31,11 +28,9 @@ const Header = ({ onMenuClick }) => {
     useEffect(() => {
         const fetchSuggestions = async () => {
             if (query.length < 1) {
-                setSuggestions([]);
                 return;
             }
             if (searchCache.current[query]) {
-                setSuggestions(searchCache.current[query]);
                 return;
             }
             try {
@@ -44,7 +39,6 @@ const Header = ({ onMenuClick }) => {
                 if (response.ok) {
                     const data = await response.json();
                     searchCache.current[query] = data.data?.drugs || [];
-                    setSuggestions(data.data?.drugs || []);
                 }
             } catch (error) {
                 console.error('Header search failed:', error);
@@ -55,11 +49,6 @@ const Header = ({ onMenuClick }) => {
         return () => clearTimeout(timer);
     }, [query]);
 
-    const handleSelect = (drug) => {
-        setQuery('');
-        setSuggestions([]);
-        navigate('/checker', { state: { prefillDrugs: [drug.name] } });
-    };
 
     return (
         <header className="header">

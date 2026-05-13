@@ -70,7 +70,7 @@ function CheckerPage() {
         } else {
             setSavedProfiles(JSON.parse(localStorage.getItem('saved_patient_profiles') || '[]'));
         }
-    }, [isSignedIn, user?.id]);
+    }, [isSignedIn, user?.id, getToken]);
 
     useEffect(() => {
         if (location.state?.prefillDrugs && selectedDrugs.length === 0) {
@@ -82,7 +82,7 @@ function CheckerPage() {
             // Clear location state so navigating back here doesn't re-prefill
             navigate(location.pathname, { replace: true, state: {} });
         }
-    }, [location.state, navigate, selectedDrugs.length]);
+    }, [location.state, location.pathname, navigate, selectedDrugs.length]);
 
     // When drugs arrive via history/global-search navigation, run the check automatically.
     // This effect intentionally omits checkInteractions from its deps to avoid re-running
@@ -114,8 +114,8 @@ function CheckerPage() {
                 } else {
                     throw new Error('Backend unavailable');
                 }
-            } catch (error) {
-                console.log('Using local fallback for drugs');
+            } catch (err) {
+                console.log('Using local fallback for drugs', err);
                 // Local fallback data
                 const mockDatabase = [
                     { name: "Aspirin" }, { name: "Warfarin" }, { name: "Lisinopril" },
@@ -133,7 +133,7 @@ function CheckerPage() {
 
         const timer = setTimeout(fetchSuggestions, 300)
         return () => clearTimeout(timer)
-    }, [query])
+    }, [query]);
 
     const addDrug = (drug) => {
         if (!selectedDrugs.find(d => d.name === drug.name)) {
@@ -158,7 +158,7 @@ function CheckerPage() {
         } else {
             setInteractions(null);
         }
-    }, [selectedDrugs]);
+    }, [selectedDrugs]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const saveToHistory = (drugs, count) => {
         const historyItem = {
@@ -228,31 +228,6 @@ function CheckerPage() {
         setSelectedDrugs(profile.drugs.map(d => ({ name: d })));
         setClinicianNotes(profile.notes || '');
         setInteractions(null);
-    };
-
-    const deleteProfile = async (id) => {
-        if (isSignedIn && user?.id) {
-            try {
-                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
-                const token = await getToken();
-                const response = await fetch(`${API_BASE_URL}/api/v1/profiles/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (response.ok) {
-                    setSavedProfiles(prev => prev.filter(p => p.id !== id));
-                    return;
-                }
-            } catch (err) {
-                console.error("Failed to delete remote profile:", err);
-            }
-        }
-
-        const updated = savedProfiles.filter(p => p.id !== id);
-        setSavedProfiles(updated);
-        localStorage.setItem('saved_patient_profiles', JSON.stringify(updated));
     };
 
     const checkInteractions = async () => {
@@ -791,7 +766,6 @@ function CheckerPage() {
                                 .filter(interaction => severityFilter === 'All' || (interaction.severity || 'Moderate').toLowerCase() === severityFilter.toLowerCase())
                                 .map((interaction, index) => {
                                     const severity = interaction.severity || 'Moderate';
-                                    const severityClass = `badge-${severity.toLowerCase()}`;
                                     return (
                                         <div 
                                             key={index} 
