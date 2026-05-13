@@ -136,7 +136,7 @@ button {
 
 .page-container {
   padding: 1.5rem;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
 }
@@ -519,16 +519,17 @@ h4 {
   }
 }
 
-/* Clinical findings grid */
+/* Clinical findings grid - Fixes the right side blank space */
 .clinical-findings-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
+  width: 100%;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
   .clinical-findings-grid {
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   }
 }
 

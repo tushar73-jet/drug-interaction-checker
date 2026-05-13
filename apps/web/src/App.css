@@ -152,143 +152,156 @@ input[type="text"]:focus {
 
 /* AI Clinical Narrative Styles */
 .ai-explain-body {
-    padding: 1.25rem;
-    color: hsl(var(--foreground));
-    font-size: 0.95rem;
-    line-height: 1.6;
+  padding: 1.25rem;
+  color: hsl(var(--foreground));
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .clinical-narrative {
-    animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.3s ease;
 }
 
 .narrative-header {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: hsl(var(--primary));
-    margin-bottom: 0.5rem;
-    margin-top: 1.5rem;
-    border-bottom: 1px solid hsl(var(--border));
-    padding-bottom: 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: hsl(var(--primary));
+  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 0.25rem;
 }
 
 .narrative-header:first-child {
-    margin-top: 0;
+  margin-top: 0;
 }
 
 .narrative-text {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .narrative-list-item {
-    margin-bottom: 0.5rem;
-    padding-left: 1.25rem;
-    position: relative;
-    list-style: none;
+  margin-bottom: 0.5rem;
+  padding-left: 1.25rem;
+  position: relative;
+  list-style: none;
 }
 
 .narrative-list-item::before {
-    content: "•";
-    position: absolute;
-    left: 0;
-    color: hsl(var(--primary));
-    font-weight: bold;
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: hsl(var(--primary));
+  font-weight: bold;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 /* AI Chat & Follow-up Styles */
 .ai-chat-section {
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid hsl(var(--border));
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid hsl(var(--border));
 }
 
 .chat-thread {
-    margin-bottom: 1.25rem;
-    padding: 1rem;
-    background: hsl(var(--muted) / 0.3);
-    border-radius: 12px;
-    border-left: 3px solid hsl(var(--primary));
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 12px;
+  border-left: 3px solid hsl(var(--primary));
 }
 
 .chat-q {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: hsl(var(--foreground));
-    margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.5rem;
 }
 
 .chat-a {
-    font-size: 0.95rem;
-    color: hsl(var(--foreground));
-    line-height: 1.5;
+  font-size: 0.95rem;
+  color: hsl(var(--foreground));
+  line-height: 1.5;
 }
 
 .follow-up-bar {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    background: hsl(var(--background));
-    padding: 4px;
-    border: 1px solid hsl(var(--border));
-    border-radius: 10px;
-    transition: border-color 0.2s;
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  background: hsl(var(--background));
+  padding: 4px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  transition: border-color 0.2s;
 }
 
 .follow-up-bar:focus-within {
-    border-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
 }
 
 .follow-up-bar input {
-    flex: 1;
-    border: none !important;
-    background: transparent !important;
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.9rem !important;
-    box-shadow: none !important;
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.9rem !important;
+  box-shadow: none !important;
 }
 
 .follow-up-bar button {
-    background: hsl(var(--primary));
-    color: white;
-    border: none;
-    border-radius: 8px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: opacity 0.2s;
+  background: hsl(var(--primary));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 .follow-up-bar button:hover {
-    opacity: 0.9;
+  opacity: 0.9;
 }
 
 .chat-loading {
-    font-size: 0.85rem;
-    color: hsl(var(--muted-foreground));
-    margin-top: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  font-size: 0.85rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .chat-error {
-    font-size: 0.85rem;
-    color: hsl(var(--destructive));
-    margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: hsl(var(--destructive));
+  margin-top: 0.5rem;
 }
 
 .spin {
-    animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
