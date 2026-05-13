@@ -271,6 +271,7 @@ function CheckerPage() {
                 }
             }));
         } catch (err) {
+            console.error("AI Chat Error:", err);
             setExplainStates(prev => ({
                 ...prev,
                 [key]: { ...current, chatLoading: false, chatError: 'Failed to get answer. Please try again.' }
