@@ -1,16 +1,14 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { User, Bell, Search, Menu, Plus, Sun, Moon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, Menu, Sun, Moon } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { UserButton } from '@clerk/react';
 import './Header.css';
 
 const Header = ({ onMenuClick }) => {
     const { user } = useAuth();
-    const [query, setQuery] = useState('');
     const [theme, setTheme] = useState(() => {
         return localStorage.getItem('theme') || 'light';
     });
-    const searchCache = useRef({});
 
     useEffect(() => {
         if (theme === 'dark') {
@@ -25,56 +23,12 @@ const Header = ({ onMenuClick }) => {
         setTheme(prev => prev === 'light' ? 'dark' : 'light');
     };
 
-    useEffect(() => {
-        const fetchSuggestions = async () => {
-            if (query.length < 1) {
-                return;
-            }
-            if (searchCache.current[query]) {
-                return;
-            }
-            try {
-                const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
-                const response = await fetch(`${API_BASE_URL}/api/v1/drugs/search?q=${query}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    searchCache.current[query] = data.data?.drugs || [];
-                }
-            } catch (error) {
-                console.error('Header search failed:', error);
-            }
-        };
-
-        const timer = setTimeout(fetchSuggestions, 300);
-        return () => clearTimeout(timer);
-    }, [query]);
-
-
     return (
         <header className="header">
             <div className="header-left">
                 <button className="menu-toggle" onClick={onMenuClick}>
                     <Menu size={24} />
                 </button>
-                <div className="search-bar-container" style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-                    <div className="search-input-wrapper">
-                        <Search size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search clinical database..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            style={{
-                                width: '100%',
-                                border: 'none',
-                                outline: 'none',
-                                background: 'transparent',
-                                padding: '0.5rem',
-                                fontSize: '0.9375rem'
-                            }}
-                        />
-                    </div>
-                </div>
             </div>
 
             <div className="header-right">
@@ -103,7 +57,7 @@ const Header = ({ onMenuClick }) => {
                 <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
                     <div className="user-info" style={{ textAlign: 'right' }}>
                         <div style={{ fontWeight: '600', fontSize: '0.875rem' }}>
-                            {user?.name || 'Doctor'}
+                            {user?.fullName || user?.firstName || 'Doctor'}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clinical Specialist</div>
                     </div>
