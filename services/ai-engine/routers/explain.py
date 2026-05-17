@@ -71,7 +71,7 @@ async def explain_interaction(body: ExplainRequest) -> Any:
     groq_key = os.getenv("GROQ_API_KEY")
     tavily_key = os.getenv("TAVILY_API_KEY")
 
-    if not groq_key or not tavily_key:
+    if not groq_key:
         raise HTTPException(
             status_code=503,
             detail="AI explanation service is not configured. Contact the administrator.",

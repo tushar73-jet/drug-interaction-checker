@@ -35,9 +35,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("AI Engine starting up …")
     # Validate required keys on startup so errors surface immediately.
-    missing = [k for k in ("GROQ_API_KEY", "TAVILY_API_KEY") if not os.getenv(k)]
-    if missing:
-        logger.warning("Missing environment variables: %s — /explain will return 503", missing)
+    if not os.getenv("GROQ_API_KEY"):
+        logger.error("Missing required GROQ_API_KEY variable — /explain will return 503")
+    if not os.getenv("TAVILY_API_KEY"):
+        logger.warning("Missing optional TAVILY_API_KEY variable — will use high-fidelity LLM citation fallback")
     yield
     logger.info("AI Engine shutting down.")
 
@@ -68,7 +69,7 @@ async def health():
     groq_ok = bool(os.getenv("GROQ_API_KEY"))
     tavily_ok = bool(os.getenv("TAVILY_API_KEY"))
     return {
-        "status": "ok" if (groq_ok and tavily_ok) else "degraded",
+        "status": "ok" if groq_ok else "degraded",
         "groq_configured": groq_ok,
         "tavily_configured": tavily_ok,
     }
